@@ -3,9 +3,8 @@ package com.jz_rma_projekat.airplane;
 import lombok.Data;
 
 @Data
-public class Flight {
-    public String number;
+public class Airline {
+    public String name;
     public String iata;
     public String icao;
-    public String codeshared;
 }

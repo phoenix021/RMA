@@ -1,42 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="12dp"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:padding="12dp">
+    android:layout_height="wrap_content">
 
     <TextView
-        android:id="@+id/routeText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Route"
+        android:id="@+id/tvFlightNumber"
         android:textStyle="bold"
-        android:textSize="18sp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <TextView
-        android:id="@+id/airlineText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Airline"
-        android:textSize="14sp"
-        app:layout_constraintTop_toBottomOf="@id/routeText"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/timeText"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
-    <TextView
-        android:id="@+id/timeText"
+        android:textSize="16sp"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="12:30"
-        android:textSize="14sp"
-        android:textColor="#888888"
-        app:layout_constraintTop_toBottomOf="@id/routeText"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        android:layout_height="wrap_content" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <TextView
+        android:id="@+id/tvRoute"
+        android:layout_marginTop="4dp"
+        android:textSize="14sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/tvTime"
+        android:layout_marginTop="4dp"
+        android:textSize="12sp"
+        android:textColor="#555555"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>

@@ -17,7 +17,7 @@ import java.util.List;
 public class HomeFragment extends Fragment {
 
     private RecyclerView recyclerView;
-    private FlightAdapter adapter;
+    private FlightsAdapter adapter;
 
     public HomeFragment() {}
 
@@ -41,13 +41,13 @@ public class HomeFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recyclerViewFlights);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        List<Flight> mockFlights = Arrays.asList(
-                new Flight("Belgrade → Paris", "Air Serbia", "12:30 PM"),
-                new Flight("Zagreb → London", "British Airways", "3:00 PM"),
-                new Flight("New York → Tokyo", "ANA", "9:00 AM")
-        );
+       // List<Flight> mockFlights = Arrays.asList(
+        //        new Flight("Belgrade → Paris", "Air Serbia", "12:30 PM"),
+         //       new Flight("Zagreb → London", "British Airways", "3:00 PM"),
+        //        new Flight("New York → Tokyo", "ANA", "9:00 AM")
+        //);
 
-        adapter = new FlightAdapter(mockFlights);
+        //adapter = new FlightsAdapter(mockFlights);
         recyclerView.setAdapter(adapter);
 
         return view;
