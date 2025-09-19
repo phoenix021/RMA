@@ -1,5 +1,7 @@
 package com.jz_rma_projekat.airplane;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -51,9 +53,9 @@ public class MainActivity extends AppCompatActivity {
 
         //setSupportActionBar(binding.toolbar);
 
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
-        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+        //NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
+        //appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
+        //NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
         binding.fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -64,6 +66,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Only add the fragment if this is the first creation
+        if (savedInstanceState == null) {
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, new FlightMapFragment())
+                    .commit();
+            findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
+        }
+
+    }
+
+    public void doAviationAPIfunctions(){
         rvFlights = findViewById(R.id.rvFlights);
         rvFlights.setLayoutManager(new LinearLayoutManager(this));
         adapter = new FlightsAdapter(new ArrayList<>());
@@ -115,6 +129,23 @@ public class MainActivity extends AppCompatActivity {
                 t.printStackTrace();
             }
         });
+
+    }
+    public void sendIntentToGoogleMaps(){
+        double latitude = 37.7749;
+        double longitude = -122.4194;
+
+        String flightName = "Flight ABC123";
+        String uri = "geo:" + latitude + "," + longitude + "?q=" + latitude + "," + longitude + "(" + Uri.encode(flightName) + ")";
+
+        //String uri = "geo:" + latitude + "," + longitude + "?q=" + latitude + "," + longitude + "(Flight+Location)";
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+        intent.setPackage("com.google.android.apps.maps");
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(intent);
+        } else {
+            Log.e("MainActivity", "Can not resolve activity google maps");
+        }
     }
 
     @Override

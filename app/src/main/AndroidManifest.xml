@@ -4,6 +4,9 @@
     package="com.jz_rma_projekat.airplane">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
 
     <application
         android:allowBackup="true"
@@ -13,11 +16,15 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Base.Theme.JZ_RMA_Projekat">
+        android:theme="@style/Theme.JZ_RMA_Projekat">
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="TVOJ_GOOGLE_MAPS_API_KEY"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Base.Theme.JZ_RMA_Projekat">
+            android:theme="@style/Theme.JZ_RMA_Projekat">
             <intent-filter>
                <action android:name="android.intent.action.MAIN" />
               <category android:name="android.intent.category.LAUNCHER" />
