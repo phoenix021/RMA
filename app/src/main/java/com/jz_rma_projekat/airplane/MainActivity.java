@@ -6,12 +6,17 @@ import android.net.Uri;
 import android.os.Bundle;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.gson.internal.bind.ReflectiveTypeAdapterFactory;
 import com.jz_rma_projekat.airplane.databinding.ActivityMainBinding;
+import com.jz_rma_projekat.api_models.Airport;
+import com.jz_rma_projekat.api_models.AirportsResponse;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -46,7 +51,9 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView rvFlights;
     private FlightsAdapter adapter;
 
-    EditText etOrigin, etDestination, etDate;
+    AutoCompleteTextView etOrigin, etDestination;
+    ArrayList<Airport> airportList = new ArrayList<>();
+    EditText etDate;
     Button btnSearchFlights;
 
     private AppBarConfiguration appBarConfiguration;
@@ -114,16 +121,82 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            // Call AviationStack API and show list
-            //fetchFlights(origin, destination, date);
         });
 
+        // Call AviationStack API and show list
+        fetchFlights();
+
     }
 
-    private void fetchFlights(String origin, String destination, String date) {
-        // Use Retrofit to query flights matching origin, destination, date
-        // Show results in a new Activity or Fragment with a RecyclerView
+    private void fetchFlights() {
+        Log.d("Airport API", "Starting fetchFlights()");
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://api.aviationstack.com/v1/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        AviationStackApi api = retrofit.create(AviationStackApi.class);
+
+        Log.e("Airport API", "Making API call to getAirports");
+        Call<AirportsResponse> call = api.getAirports(API_KEY);
+
+        call.enqueue(new Callback<AirportsResponse>() {
+            @Override
+            public void onResponse(Call<AirportsResponse> call, Response<AirportsResponse> response) {
+                Log.e("Airport API", "onResponse() triggered");
+
+                if (response.isSuccessful() && response.body() != null) {
+                    Log.d("Airport API", "API call successful");
+
+                    List<Airport> airports = response.body().getData();
+                    Log.d("Airport API", "Fetched " + (airports != null ? airports.size() : 0) + " airports");
+
+                    List<String> airportNames = new ArrayList<>();
+                    for (Airport airport : airports) {
+                        if (airport.getName() != null && airport.getIataCode() != null) {
+                            String formatted = airport.getName() + " (" + airport.getIataCode() + ")";
+                            Log.e("Airport API", "Adding airport: " + formatted);
+                            airportNames.add(formatted);
+                        }
+                    }
+
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                            MainActivity.this,
+                            android.R.layout.simple_dropdown_item_1line,
+                            airportNames
+                    );
+
+                    AutoCompleteTextView etOrigin = findViewById(R.id.etOrigin);
+                    AutoCompleteTextView etDestination = findViewById(R.id.etDestination);
+
+                    etOrigin.setAdapter(adapter);
+                    etDestination.setAdapter(adapter);
+
+                    // Optional: show dropdown immediately for testing
+                    // etOrigin.showDropDown();
+                    // etDestination.showDropDown();
+                } else {
+                    Log.e("Airport API", "Response unsuccessful. Code: " + response.code());
+
+                    if (response.errorBody() != null) {
+                        try {
+                            String error = response.errorBody().string();
+                            Log.e("Airport API", "Error body: " + error);
+                        } catch (IOException e) {
+                            Log.e("Airport API", "Failed to read error body", e);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<AirportsResponse> call, Throwable t) {
+                Log.e("Airport API", "API call failed", t);
+            }
+        });
     }
+
 
     public void doAviationAPIfunctions(){
         rvFlights = findViewById(R.id.rvFlights);

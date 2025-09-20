@@ -53,21 +53,20 @@
             android:layout_marginBottom="32dp" />
 
         <!-- Origin Airport -->
-        <EditText
+        <AutoCompleteTextView
             android:id="@+id/etOrigin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Origin Airport (e.g. Belgrade)"
+            android:hint="Origin Airport"
             android:inputType="text"
             android:padding="12dp"
             android:layout_marginBottom="16dp" />
 
-        <!-- Destination Airport -->
-        <EditText
+        <AutoCompleteTextView
             android:id="@+id/etDestination"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Destination Airport (e.g. Berlin)"
+            android:hint="Destination Airport"
             android:inputType="text"
             android:padding="12dp"
             android:layout_marginBottom="16dp" />
