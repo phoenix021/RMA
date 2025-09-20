@@ -51,4 +51,5 @@ dependencies {
     implementation libs.play.services.maps
     implementation libs.android.sdk
     implementation 'org.maplibre.gl:android-sdk:9.5.0'
+    implementation "androidx.core:core-splashscreen:1.0.1"
 }

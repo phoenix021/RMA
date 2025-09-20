@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
@@ -23,6 +24,7 @@ import androidx.fragment.app.Fragment;
 import org.maplibre.android.MapLibre;
 import org.maplibre.android.WellKnownTileServer;
 import org.maplibre.android.camera.CameraPosition;
+import org.maplibre.android.camera.CameraUpdateFactory;
 import org.maplibre.android.geometry.LatLng;
 import org.maplibre.android.maps.MapView;
 import org.maplibre.android.maps.MapLibreMap;
@@ -50,6 +52,11 @@ public class FlightMapFragment extends Fragment implements OnMapReadyCallback {
     private static final double LATITUDE = 37.7749;
     private static final double LONGITUDE = -122.4194;
 
+    ImageButton btnZoomIn;
+    ImageButton btnZoomOut;
+    ImageButton recenterBtn;
+
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -65,7 +72,34 @@ public class FlightMapFragment extends Fragment implements OnMapReadyCallback {
         mapView.onCreate(savedInstanceState);
         Log.e("FlightMapFragment", "Calling getMapAsync");
         mapView.getMapAsync(this);
+
+
+        btnZoomIn = view.findViewById(R.id.btnZoomIn);
+        btnZoomOut = view.findViewById(R.id.btnZoomOut);
+        recenterBtn = view.findViewById(R.id.btnRecenter);
+        btnZoomIn.setOnClickListener(v -> {
+            if (mapLibreMap != null) {
+                mapLibreMap.animateCamera(CameraUpdateFactory.zoomIn());
+            }
+        });
+
+        btnZoomOut.setOnClickListener(v -> {
+            if (mapLibreMap != null) {
+                mapLibreMap.animateCamera(CameraUpdateFactory.zoomOut());
+            }
+        });
+
+        recenterBtn.setOnClickListener(v -> recenterOnFlight());
         return view;
+    }
+
+    private void recenterOnFlight() {
+        if (mapLibreMap != null) {
+            CameraPosition position = new CameraPosition.Builder()
+                    .target(new LatLng(LATITUDE, LONGITUDE))
+                    .build();
+            mapLibreMap.animateCamera(CameraUpdateFactory.newCameraPosition(position), 500, null);
+        }
     }
 
     @Override
@@ -73,7 +107,8 @@ public class FlightMapFragment extends Fragment implements OnMapReadyCallback {
         this.mapLibreMap = mapLibreMap;
 
        // String styleUrl = "https://demotiles.maplibre.org/style.json";
-
+       // mapLibreMap.getUiSettings().setZoomControlsEnabled(true);
+        mapLibreMap.getUiSettings().setZoomGesturesEnabled(true);
         mapLibreMap.setStyle(new Style.Builder().fromUri("https://demotiles.maplibre.org/style.json"), style -> {
             Log.e("MapLibre in FlightMapFragment", "Style loaded, moving camera...");
             // Move camera to location

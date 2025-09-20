@@ -8,4 +8,41 @@
         android:id="@+id/mapView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <!-- Zoom + Recenter Controls -->
+    <LinearLayout
+        android:id="@+id/zoomControls"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="16dp"
+        android:layout_alignParentBottom="true">
+
+        <ImageButton
+            android:id="@+id/btnZoomIn"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/zoom_button_background"
+            android:src="@mipmap/ic_zoom_in"
+            android:contentDescription="Zoom In" />
+
+        <ImageButton
+            android:id="@+id/btnZoomOut"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/zoom_button_background"
+            android:src="@mipmap/ic_zoom_out"
+            android:contentDescription="Zoom Out" />
+
+        <ImageButton
+            android:id="@+id/btnRecenter"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/zoom_button_background"
+            android:src="@mipmap/ic_recenter"
+            android:contentDescription="Recenter" />
+    </LinearLayout>
+
 </FrameLayout>
