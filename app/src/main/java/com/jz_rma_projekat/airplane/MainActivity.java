@@ -1,5 +1,6 @@
 package com.jz_rma_projekat.airplane;
 
+import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -11,6 +12,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -24,6 +28,7 @@ import retrofit2.Call;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -40,6 +45,9 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView rvFlights;
     private FlightsAdapter adapter;
+
+    EditText etOrigin, etDestination, etDate;
+    Button btnSearchFlights;
 
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
@@ -72,9 +80,49 @@ public class MainActivity extends AppCompatActivity {
                     .beginTransaction()
                     .replace(R.id.fragment_container, new FlightMapFragment())
                     .commit();
-            findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
+           // findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
         }
 
+        etOrigin = findViewById(R.id.etOrigin);
+        etDestination = findViewById(R.id.etDestination);
+        etDate = findViewById(R.id.etDate);
+        btnSearchFlights = findViewById(R.id.btnSearchFlights);
+
+        // Date picker
+        etDate.setOnClickListener(v -> {
+            Calendar calendar = Calendar.getInstance();
+            DatePickerDialog dialog = new DatePickerDialog(MainActivity.this,
+                    (view, year, month, dayOfMonth) -> {
+                        String selectedDate = String.format(Locale.getDefault(), "%04d-%02d-%02d", year, month + 1, dayOfMonth);
+                        etDate.setText(selectedDate);
+                    },
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH)
+            );
+            dialog.show();
+        });
+
+        // Search button logic
+        btnSearchFlights.setOnClickListener(v -> {
+            String origin = etOrigin.getText().toString().trim();
+            String destination = etDestination.getText().toString().trim();
+            String date = etDate.getText().toString().trim();
+
+            if (origin.isEmpty() || destination.isEmpty() || date.isEmpty()) {
+                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Call AviationStack API and show list
+            //fetchFlights(origin, destination, date);
+        });
+
+    }
+
+    private void fetchFlights(String origin, String destination, String date) {
+        // Use Retrofit to query flights matching origin, destination, date
+        // Show results in a new Activity or Fragment with a RecyclerView
     }
 
     public void doAviationAPIfunctions(){

@@ -4,30 +4,94 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
     <!-- AppBar / Toolbar -->
-    <com.google.android.material.appbar.AppBarLayout
+
+
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fitsSystemWindows="true">
+        android:layout_height="match_parent"
+        android:padding="24dp">
 
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            app:title="Flight List"
-            app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light"/>
-    </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Main content container -->
-    <FrameLayout
+
+
+        <!-- Main content container -->
+    <LinearLayout
         android:id="@+id/main_content_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fitsSystemWindows="true">
+
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:title="Flight List"
+                app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light"/>
+        </com.google.android.material.appbar.AppBarLayout>
+
+
+        <!-- Welcome -->
+        <TextView
+            android:id="@+id/tvWelcome"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Welcome to Flight Tracker ✈️"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="32dp" />
+
+        <!-- Origin Airport -->
+        <EditText
+            android:id="@+id/etOrigin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Origin Airport (e.g. Belgrade)"
+            android:inputType="text"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Destination Airport -->
+        <EditText
+            android:id="@+id/etDestination"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Destination Airport (e.g. Berlin)"
+            android:inputType="text"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Date -->
+        <EditText
+            android:id="@+id/etDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Select Date"
+            android:focusable="false"
+            android:inputType="none"
+            android:padding="12dp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Search Button -->
+        <Button
+            android:id="@+id/btnSearchFlights"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Search Flights"
+            android:backgroundTint="@color/purple_500"
+            android:textColor="@android:color/white"
+            android:padding="12dp" />
 
         <!-- RecyclerView as default content -->
         <androidx.recyclerview.widget.RecyclerView
@@ -41,7 +105,9 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="gone" />
-    </FrameLayout>
+    </LinearLayout>
+
+    </ScrollView>
 
     <!-- Floating Action Button -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
