@@ -1,13 +1,23 @@
 package com.jz_rma_projekat.airplane;
 
+import android.Manifest;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.jz_rma_projekat.airplane.database.AppDatabase;
@@ -17,10 +27,15 @@ import com.jz_rma_projekat.airplane.database.entities.AirportEntity;
 import com.jz_rma_projekat.airplane.database.dto.AirportDto;
 import com.jz_rma_projekat.airplane.database.api_models.AirportsResponse;
 
+//import androidx.core.app.ActivityCompat;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.room.Room;
 
-import androidx.appcompat.app.AppCompatActivity;
 
+
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -69,6 +84,11 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
 
     AppDatabase db;
+
+    private FusedLocationProviderClient mFusedLocationClient;
+    private LocationCallback mLocationCallback;
+    private LocationRequest mLocationRequest;
+    private boolean mRequestingLocationUpdates = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,9 +163,103 @@ public class MainActivity extends AppCompatActivity {
                 "aviation_db"
         ).build();
 
-        saveAirportsToDatabase(airports);
+        //saveAirportsToDatabase(airports);
 
+
+
+        //mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        //createLocationRequest();
+
+       // mLocationCallback = new LocationCallback() {
+       //     @Override
+       //     public void onLocationResult(@NonNull LocationResult locationResult) {
+       //         if (locationResult == null) return;
+//
+   //              for (Location location : locationResult.getLocations()) {
+     //               double lat = location.getLatitude();
+       //             double lon = location.getLongitude();
+         //           Log.d("LOCATION", "Lat: " + lat + ", Lon: " + lon);
+           //     }
+            //}
+        //};
     }
+
+
+    //ideja, kada avion bude na sat vremena udaljen izbaci notifikaciju da korisnik krene na aerodrom i ne razmislja o kasnjenju itd
+    // kreiranje zahteva za lokaciju:
+
+    //Google Play Location API pruža i druge servise kao sto su:
+    //        ◦ Dobijanje adrese na osnovu lokacije – geocoding,
+    //        ◦ Definisanje oblasti u odnosu na neku lokaciju - geofences, .
+
+    protected void createLocationRequest() {
+        // ✅ Correct usage of LocationRequest.Builder (new API)
+        mLocationRequest = new LocationRequest.Builder(
+                10000 // interval in ms
+        )
+                .setMinUpdateIntervalMillis(5000)
+                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                .build();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mRequestingLocationUpdates) {
+            startLocationUpdates();
+        }
+    }
+
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
+    private void startLocationUpdates() {
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                1);
+        // ✅ Make sure you’ve checked runtime permissions before this call!
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // Request permission if missing
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        LOCATION_PERMISSION_REQUEST_CODE
+                );
+
+            return;
+        }
+        mFusedLocationClient.requestLocationUpdates(
+                mLocationRequest,
+                mLocationCallback,
+                Looper.getMainLooper()
+        );
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // User granted permission — start updates
+                startLocationUpdates();
+            } else {
+                // User denied permission
+                Log.e("PERMISSION", "Location permission denied by user");
+            }
+        }
+    }
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopLocationUpdates();
+    }
+
+    private void stopLocationUpdates() {
+        mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+    }
+
 
     //private void saveToDatabase(List<AirportEntity> airports) {
     //    AppDatabase db = Room.databaseBuilder(
