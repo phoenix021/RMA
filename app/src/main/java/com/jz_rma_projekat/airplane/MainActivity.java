@@ -21,6 +21,7 @@ import com.google.android.gms.location.LocationServices;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.jz_rma_projekat.airplane.database.AppDatabase;
+import com.jz_rma_projekat.airplane.database.dao.AirportDao;
 import com.jz_rma_projekat.airplane.database.dto.AirportDto;
 import com.jz_rma_projekat.airplane.databinding.ActivityMainBinding;
 import com.jz_rma_projekat.airplane.database.entities.AirportEntity;
@@ -60,6 +61,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -118,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
                     .beginTransaction()
                     .replace(R.id.fragment_container, new FlightMapFragment())
                     .commit();
-           // findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
+            // findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
         }
 
         etOrigin = findViewById(R.id.etOrigin);
@@ -154,34 +156,47 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
-        // Call AviationStack API and show list
-        ArrayList<AirportDto> airports = fetchAirports();
-
         db = Room.databaseBuilder(
                 getApplicationContext(),
                 AppDatabase.class,
                 "aviation_db"
         ).build();
 
-        //saveAirportsToDatabase(airports);
+        new Thread(() -> {
+            AirportDao dao = db.airportDao();
 
+            int count = dao.getCount(); // number of records
+            boolean exists = dao.hasAny(); // true if at least one row exists
+
+            Log.d("MainActivity", "Number of airports: " + count);
+            Log.d("MainActivity", "Are there any airports? " + exists);
+            // Call AviationStack API and show list
+            ArrayList<AirportDto> airports = new ArrayList<AirportDto>(0);
+            if (!exists) {
+                airports = fetchAirports();
+            } else {
+                saveAirportsToDatabase(airports);
+            }
+        }).start();
+
+        getAirportsFromDatabase();
 
 
         //mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         //createLocationRequest();
 
-       // mLocationCallback = new LocationCallback() {
-       //     @Override
-       //     public void onLocationResult(@NonNull LocationResult locationResult) {
-       //         if (locationResult == null) return;
+        // mLocationCallback = new LocationCallback() {
+        //     @Override
+        //     public void onLocationResult(@NonNull LocationResult locationResult) {
+        //         if (locationResult == null) return;
 //
-   //              for (Location location : locationResult.getLocations()) {
-     //               double lat = location.getLatitude();
-       //             double lon = location.getLongitude();
-         //           Log.d("LOCATION", "Lat: " + lat + ", Lon: " + lon);
-           //     }
-            //}
+        //              for (Location location : locationResult.getLocations()) {
+        //               double lat = location.getLatitude();
+        //             double lon = location.getLongitude();
+        //           Log.d("LOCATION", "Lat: " + lat + ", Lon: " + lon);
+        //     }
+        //}
         //};
     }
 
@@ -192,6 +207,31 @@ public class MainActivity extends AppCompatActivity {
     //Google Play Location API pruža i druge servise kao sto su:
     //        ◦ Dobijanje adrese na osnovu lokacije – geocoding,
     //        ◦ Definisanje oblasti u odnosu na neku lokaciju - geofences, .
+
+void populateAirportDropdowns(List<AirportDto> airports){
+    List<String> airportNames = new ArrayList<>();
+    for(AirportDto airport :airports)
+    {
+        if (airport.getName() != null && airport.getIataCode() != null) {
+            String formatted = airport.getName() + " (" + airport.getIataCode() + ") Country:" + airport.getCountry();
+            Log.e("Airport API", "Adding airport: " + formatted);
+
+            airportNames.add(formatted);
+        }
+    }
+
+    ArrayAdapter<String> adapter = new ArrayAdapter<>(
+            MainActivity.this,
+            android.R.layout.simple_dropdown_item_1line,
+            airportNames
+    );
+
+    AutoCompleteTextView etOrigin = findViewById(R.id.etOrigin);
+    AutoCompleteTextView etDestination = findViewById(R.id.etDestination);
+
+        etOrigin.setAdapter(adapter);
+        etDestination.setAdapter(adapter);
+}
 
     protected void createLocationRequest() {
         // ✅ Correct usage of LocationRequest.Builder (new API)
@@ -288,6 +328,31 @@ public class MainActivity extends AppCompatActivity {
             Log.d("Room", "Airports saved to DB");
         }).start();
     }
+
+    public void getAirportsFromDatabase() {
+        new Thread(() -> {
+            List<AirportEntity> airportEntities = db.airportDao().getAllAirports();
+
+            if (airportEntities == null || airportEntities.isEmpty()) {
+                Log.d("Room", "No airports found in DB");
+            } else {
+                for (AirportEntity airport : airportEntities) {
+                    Log.d("Room", "Airport: " + airport.name + " (" + airport.iataCode + ")");
+                }
+            }
+            List<AirportDto> airportDtos = airportEntities.stream()
+                    .map(entity -> new AirportDto(
+                            entity.iataCode,
+                            entity.name,
+                            entity.country
+                    ))
+                    .collect(Collectors.toList());
+
+            runOnUiThread(() -> {
+                populateAirportDropdowns(airportDtos); // safely update AutoCompleteTextView
+            });
+        }).start();
+    }
     public void preloadAutoComplete(){
         new Thread(() -> {
             List<AirportEntity> airportEntities = db.airportDao().getAllAirports();
@@ -359,30 +424,11 @@ public class MainActivity extends AppCompatActivity {
                     List<AirportDto> airports = response.body().getData();
                     Log.d("Airport API", "Fetched " + (airports != null ? airports.size() : 0) + " airports");
 
-                    List<String> airportNames = new ArrayList<>();
-                    for (AirportDto airport : airports) {
-                        if (airport.getName() != null && airport.getIataCode() != null) {
-                            String formatted = airport.getName() + " (" + airport.getIataCode() + ")";
-                            Log.e("Airport API", "Adding airport: " + formatted);
-                            airportNames.add(formatted);
-                        }
-                    }
+                    saveAirportsToDatabase(airports);
+                    runOnUiThread(() -> {
+                        populateAirportDropdowns(airports); // safely update AutoCompleteTextView
+                    });
 
-                    ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                            MainActivity.this,
-                            android.R.layout.simple_dropdown_item_1line,
-                            airportNames
-                    );
-
-                    AutoCompleteTextView etOrigin = findViewById(R.id.etOrigin);
-                    AutoCompleteTextView etDestination = findViewById(R.id.etDestination);
-
-                    etOrigin.setAdapter(adapter);
-                    etDestination.setAdapter(adapter);
-
-                    // Optional: show dropdown immediately for testing
-                    // etOrigin.showDropDown();
-                    // etDestination.showDropDown();
                 } else {
                     Log.e("Airport API", "Response unsuccessful. Code: " + response.code());
 

@@ -20,4 +20,11 @@ public interface AirportDao {
 
     @Query("DELETE FROM airports")
     void clear();
+
+    @Query("SELECT COUNT(*) FROM airports")
+    int getCount();
+
+    // Optional: check if there’s at least one row
+    @Query("SELECT EXISTS(SELECT 1 FROM airports LIMIT 1)")
+    boolean hasAny();
 }
