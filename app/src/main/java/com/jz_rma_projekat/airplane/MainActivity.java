@@ -1,7 +1,11 @@
 package com.jz_rma_projekat.airplane;
 
 import android.app.DatePickerDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -51,6 +55,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class MainActivity extends AppCompatActivity {
     private static final String BASE_URL = "https://api.aviationstack.com/v1/";
     private static final String API_KEY = "07d66aaa5c32f0546552c090cd95403f"; // Replace with your key
+    private static final String DEBUG_TAG = "MainActivity";
 
     private RecyclerView rvFlights;
     private FlightsAdapter adapter;
@@ -188,6 +193,31 @@ public class MainActivity extends AppCompatActivity {
                 etDestination.setAdapter(adapter);
             });
         }).start();
+    }
+
+    //provera konektcije
+    //sa sajlajdova
+    public boolean isOnline() {
+        ConnectivityManager connMgr = (ConnectivityManager)
+                getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+
+        boolean isWifiConn = false;
+        boolean isMobileConn = false;
+        for (Network network : connMgr.getAllNetworks()) {
+            NetworkInfo networkInfo1 = connMgr.getNetworkInfo(network);
+            if (networkInfo1.getType() == ConnectivityManager.TYPE_WIFI) {
+                isWifiConn |= networkInfo1.isConnected();
+            }
+            if (networkInfo.getType() == ConnectivityManager.TYPE_MOBILE) {
+                isMobileConn |= networkInfo.isConnected();
+            }
+        }
+        Log.d(DEBUG_TAG, "Wifi connected: " + isWifiConn);
+        Log.d(DEBUG_TAG, "Mobile connected: " + isMobileConn);
+
+
+        return (networkInfo != null && networkInfo.isConnected());
     }
 
     private ArrayList<AirportDto> fetchAirports() {
