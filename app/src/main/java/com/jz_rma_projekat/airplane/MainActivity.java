@@ -6,10 +6,14 @@ import android.net.Uri;
 import android.os.Bundle;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.google.gson.internal.bind.ReflectiveTypeAdapterFactory;
+import com.jz_rma_projekat.airplane.database.AppDatabase;
+import com.jz_rma_projekat.airplane.database.dto.AirportDto;
 import com.jz_rma_projekat.airplane.databinding.ActivityMainBinding;
-import com.jz_rma_projekat.api_models.Airport;
-import com.jz_rma_projekat.api_models.AirportsResponse;
+import com.jz_rma_projekat.airplane.database.entities.AirportEntity;
+import com.jz_rma_projekat.airplane.database.dto.AirportDto;
+import com.jz_rma_projekat.airplane.database.api_models.AirportsResponse;
+
+import androidx.room.Room;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -52,12 +56,14 @@ public class MainActivity extends AppCompatActivity {
     private FlightsAdapter adapter;
 
     AutoCompleteTextView etOrigin, etDestination;
-    ArrayList<Airport> airportList = new ArrayList<>();
+    ArrayList<AirportDto> airportList = new ArrayList<>();
     EditText etDate;
     Button btnSearchFlights;
 
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
+
+    AppDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,11 +130,67 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Call AviationStack API and show list
-        fetchFlights();
+        ArrayList<AirportDto> airports = fetchAirports();
+
+        db = Room.databaseBuilder(
+                getApplicationContext(),
+                AppDatabase.class,
+                "aviation_db"
+        ).build();
+
+        saveAirportsToDatabase(airports);
 
     }
 
-    private void fetchFlights() {
+    //private void saveToDatabase(List<AirportEntity> airports) {
+    //    AppDatabase db = Room.databaseBuilder(
+    //            getApplicationContext(),
+    //            AppDatabase.class,
+    //            "app_database"
+    //    ).build();
+
+    //    Executors.newSingleThreadExecutor().execute(() -> {
+    //        db.airportDao().insertAll(airports);
+    //    });
+    //}
+
+    public void saveAirportsToDatabase(List<AirportDto> airports){
+        new Thread(() -> {
+            List<AirportEntity> airportEntities = new ArrayList<>();
+            for (AirportDto airport : airports) {
+                airportEntities.add(new AirportEntity(
+                        airport.getIataCode(),
+                        airport.getName(),
+                        airport.getCountry()
+                ));
+            }
+
+            db.airportDao().insertAll(airportEntities);
+            Log.d("Room", "Airports saved to DB");
+        }).start();
+    }
+    public void preloadAutoComplete(){
+        new Thread(() -> {
+            List<AirportEntity> airportEntities = db.airportDao().getAllAirports();
+            List<String> names = new ArrayList<>();
+
+            for (AirportEntity airport : airportEntities) {
+                names.add(airport.name + " (" + airport.iataCode + ")");
+            }
+
+            runOnUiThread(() -> {
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                        MainActivity.this,
+                        android.R.layout.simple_dropdown_item_1line,
+                        names
+                );
+                etOrigin.setAdapter(adapter);
+                etDestination.setAdapter(adapter);
+            });
+        }).start();
+    }
+
+    private ArrayList<AirportDto> fetchAirports() {
         Log.d("Airport API", "Starting fetchFlights()");
 
         Retrofit retrofit = new Retrofit.Builder()
@@ -141,6 +203,7 @@ public class MainActivity extends AppCompatActivity {
         Log.e("Airport API", "Making API call to getAirports");
         Call<AirportsResponse> call = api.getAirports(API_KEY);
 
+
         call.enqueue(new Callback<AirportsResponse>() {
             @Override
             public void onResponse(Call<AirportsResponse> call, Response<AirportsResponse> response) {
@@ -149,11 +212,11 @@ public class MainActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     Log.d("Airport API", "API call successful");
 
-                    List<Airport> airports = response.body().getData();
+                    List<AirportDto> airports = response.body().getData();
                     Log.d("Airport API", "Fetched " + (airports != null ? airports.size() : 0) + " airports");
 
                     List<String> airportNames = new ArrayList<>();
-                    for (Airport airport : airports) {
+                    for (AirportDto airport : airports) {
                         if (airport.getName() != null && airport.getIataCode() != null) {
                             String formatted = airport.getName() + " (" + airport.getIataCode() + ")";
                             Log.e("Airport API", "Adding airport: " + formatted);
@@ -194,7 +257,9 @@ public class MainActivity extends AppCompatActivity {
             public void onFailure(Call<AirportsResponse> call, Throwable t) {
                 Log.e("Airport API", "API call failed", t);
             }
+
         });
+        return null;
     }
 
 

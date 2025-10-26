@@ -1,6 +1,6 @@
 package com.jz_rma_projekat.airplane;
 
-import com.jz_rma_projekat.api_models.AirportsResponse;
+import com.jz_rma_projekat.airplane.database.api_models.AirportsResponse;
 
 import retrofit2.Call;
 import retrofit2.http.GET;
