@@ -3,6 +3,7 @@ package com.jz_rma_projekat.airplane.database.api_models;
 import com.google.gson.annotations.SerializedName;
 import com.jz_rma_projekat.airplane.database.dto.AirportDto;
 import com.jz_rma_projekat.airplane.database.entities.AirportEntity;
+import com.jz_rma_projekat.airplane.utils.Pagination;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,12 @@ public class AirportsResponse {
 
     public void setData(List<AirportDto> data) {
         this.data = data;
+    }
+
+    private Pagination pagination;
+
+    public Pagination getPagination() {
+        return pagination;
     }
 
     private List<AirportEntity> mapToEntities(AirportsResponse response) {

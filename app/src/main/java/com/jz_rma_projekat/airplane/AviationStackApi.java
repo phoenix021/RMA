@@ -18,4 +18,11 @@ public interface AviationStackApi {
 
     @GET("airports")
     Call<AirportsResponse> getAirports(@Query("access_key") String accessKey);
+
+    @GET("airports")
+    Call<AirportsResponse> getAirports(
+            @Query("access_key") String apiKey,
+            @Query("limit") int limit,
+            @Query("offset") int offset
+    );
 }

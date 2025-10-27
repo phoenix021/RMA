@@ -52,6 +52,15 @@
             android:textStyle="bold"
             android:layout_marginBottom="32dp" />
 
+        <AutoCompleteTextView
+            android:id="@+id/etCountry"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Select Country"
+            android:inputType="text"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
+
         <!-- Origin Airport -->
         <AutoCompleteTextView
             android:id="@+id/etOrigin"

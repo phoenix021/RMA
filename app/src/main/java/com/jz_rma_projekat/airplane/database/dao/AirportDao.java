@@ -27,4 +27,10 @@ public interface AirportDao {
     // Optional: check if there’s at least one row
     @Query("SELECT EXISTS(SELECT 1 FROM airports LIMIT 1)")
     boolean hasAny();
+
+    @Query("SELECT DISTINCT country FROM airports ORDER BY country ASC")
+    List<String> getAllCountries();
+
+    @Query("SELECT * FROM airports WHERE country = :country ORDER BY name ASC")
+    List<AirportEntity> getAirportsByCountry(String country);
 }

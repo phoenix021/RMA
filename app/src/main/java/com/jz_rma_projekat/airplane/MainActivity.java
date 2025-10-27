@@ -5,7 +5,6 @@ import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
@@ -16,8 +15,6 @@ import android.os.Bundle;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.jz_rma_projekat.airplane.database.AppDatabase;
@@ -25,15 +22,13 @@ import com.jz_rma_projekat.airplane.database.dao.AirportDao;
 import com.jz_rma_projekat.airplane.database.dto.AirportDto;
 import com.jz_rma_projekat.airplane.databinding.ActivityMainBinding;
 import com.jz_rma_projekat.airplane.database.entities.AirportEntity;
-import com.jz_rma_projekat.airplane.database.dto.AirportDto;
 import com.jz_rma_projekat.airplane.database.api_models.AirportsResponse;
+import com.jz_rma_projekat.airplane.utils.mappers.AirportMapper;
 
 //import androidx.core.app.ActivityCompat;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.room.Room;
-
 
 
 import android.os.Looper;
@@ -58,9 +53,12 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import retrofit2.Callback;
@@ -77,15 +75,18 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView rvFlights;
     private FlightsAdapter adapter;
 
-    AutoCompleteTextView etOrigin, etDestination;
+    private AppDatabase db;
+
+    AutoCompleteTextView etCountry ;
+    AutoCompleteTextView etOrigin ;
+    AutoCompleteTextView etDestination;
+
     ArrayList<AirportDto> airportList = new ArrayList<>();
     EditText etDate;
     Button btnSearchFlights;
 
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
-
-    AppDatabase db;
 
     private FusedLocationProviderClient mFusedLocationClient;
     private LocationCallback mLocationCallback;
@@ -122,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
                     .commit();
             // findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
         }
-
+        etCountry = findViewById(R.id.etCountry);
         etOrigin = findViewById(R.id.etOrigin);
         etDestination = findViewById(R.id.etDestination);
         etDate = findViewById(R.id.etDate);
@@ -156,12 +157,7 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
-        db = Room.databaseBuilder(
-                getApplicationContext(),
-                AppDatabase.class,
-                "aviation_db"
-        ).build();
-
+        db = AppDatabase.getInstance(getApplicationContext());
         new Thread(() -> {
             AirportDao dao = db.airportDao();
 
@@ -171,15 +167,19 @@ public class MainActivity extends AppCompatActivity {
             Log.d("MainActivity", "Number of airports: " + count);
             Log.d("MainActivity", "Are there any airports? " + exists);
             // Call AviationStack API and show list
-            ArrayList<AirportDto> airports = new ArrayList<AirportDto>(0);
+            List<AirportDto> airports = new ArrayList<AirportDto>(0);
             if (!exists) {
-                airports = fetchAirports();
+                fetchAndSaveAllAirports();
             } else {
-                saveAirportsToDatabase(airports);
+                count = dao.getCount();
+                Log.d("MainActivity", "Number of airports: " + count);
+                List<AirportEntity> airportEntities = dao.getAllAirports();
+                List<AirportDto> dtos =  AirportMapper.toDtoList(airportEntities);
+                runOnUiThread(() -> populateAirportDropdowns(dtos));
             }
         }).start();
 
-        getAirportsFromDatabase();
+        //getAirportsFromDatabase();
 
 
         //mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -209,16 +209,30 @@ public class MainActivity extends AppCompatActivity {
     //        ◦ Definisanje oblasti u odnosu na neku lokaciju - geofences, .
 
 void populateAirportDropdowns(List<AirportDto> airports){
-    List<String> airportNames = new ArrayList<>();
+    List<String> airportNames = new ArrayList<>(0);
+    Set<String> uniqueCountries = new HashSet<>();
     for(AirportDto airport :airports)
     {
         if (airport.getName() != null && airport.getIataCode() != null) {
             String formatted = airport.getName() + " (" + airport.getIataCode() + ") Country:" + airport.getCountry();
-            Log.e("Airport API", "Adding airport: " + formatted);
+            Log.e("MainActivity", "Populating airport: " + formatted);
 
             airportNames.add(formatted);
         }
+
+        if (airport.getCountry() != null && !airport.getCountry().isEmpty()) {
+            uniqueCountries.add(airport.getCountry());
+        }
     }
+
+    List<String> airportCountries = new ArrayList<>(uniqueCountries);
+    Collections.sort(airportCountries);
+
+    ArrayAdapter<String> countryAdapter = new ArrayAdapter<>(
+            MainActivity.this,
+            android.R.layout.simple_dropdown_item_1line,
+            airportCountries
+    );
 
     ArrayAdapter<String> adapter = new ArrayAdapter<>(
             MainActivity.this,
@@ -226,13 +240,30 @@ void populateAirportDropdowns(List<AirportDto> airports){
             airportNames
     );
 
-    AutoCompleteTextView etOrigin = findViewById(R.id.etOrigin);
-    AutoCompleteTextView etDestination = findViewById(R.id.etDestination);
+    etCountry = findViewById(R.id.etCountry);
+    etOrigin = findViewById(R.id.etOrigin);
+    etDestination = findViewById(R.id.etDestination);
 
-        etOrigin.setAdapter(adapter);
-        etDestination.setAdapter(adapter);
+    etOrigin.setAdapter(adapter);
+    etDestination.setAdapter(adapter);
+    etCountry.setAdapter(countryAdapter);
 }
 
+
+    private void loadAirportsForCountry(String country) {
+        new Thread(() -> {
+            AirportDao dao = db.airportDao();
+            List<AirportEntity> airportEntities = dao.getAirportsByCountry(country);
+            List<AirportDto> airports = AirportMapper.toDtoList(airportEntities);
+
+            runOnUiThread(() -> {
+                populateAirportDropdowns(airports);
+                Toast.makeText(MainActivity.this,
+                        "Loaded " + airports.size() + " airports in " + country,
+                        Toast.LENGTH_SHORT).show();
+            });
+        }).start();
+    }
     protected void createLocationRequest() {
         // ✅ Correct usage of LocationRequest.Builder (new API)
         mLocationRequest = new LocationRequest.Builder(
@@ -402,12 +433,7 @@ void populateAirportDropdowns(List<AirportDto> airports){
     private ArrayList<AirportDto> fetchAirports() {
         Log.d("Airport API", "Starting fetchFlights()");
 
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://api.aviationstack.com/v1/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-
-        AviationStackApi api = retrofit.create(AviationStackApi.class);
+        AviationStackApi api =RetrofitClient.getApi();
 
         Log.e("Airport API", "Making API call to getAirports");
         Call<AirportsResponse> call = api.getAirports(API_KEY);
@@ -424,7 +450,9 @@ void populateAirportDropdowns(List<AirportDto> airports){
                     List<AirportDto> airports = response.body().getData();
                     Log.d("Airport API", "Fetched " + (airports != null ? airports.size() : 0) + " airports");
 
-                    saveAirportsToDatabase(airports);
+                    //saveAirportsToDatabase(airports);
+
+
                     runOnUiThread(() -> {
                         populateAirportDropdowns(airports); // safely update AutoCompleteTextView
                     });
@@ -450,6 +478,57 @@ void populateAirportDropdowns(List<AirportDto> airports){
 
         });
         return null;
+    }
+
+    private void fetchAndSaveAllAirports() {
+        AviationStackApi api = RetrofitClient.getApi();
+        Log.d("Airport API", "Starting airport fetch from offset 0");
+        fetchAirportsPage(api, 0); // start from offset 0
+    }
+
+    // Recursive async function to fetch pages
+    private void fetchAirportsPage(AviationStackApi api, int offset) {
+        Call<AirportsResponse> call = api.getAirports(API_KEY, 100, offset);
+
+        call.enqueue(new Callback<AirportsResponse>() {
+            @Override
+            public void onResponse(Call<AirportsResponse> call, Response<AirportsResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    AirportsResponse data = response.body();
+                    List<AirportDto> airports = data.getData();
+                    int total = data.getPagination().getTotal();
+
+                    if (airports != null && !airports.isEmpty()) {
+                        saveAirportsToDatabase(airports);
+                        Log.d("Airport API", "Saved " + airports.size() +
+                                " airports (offset=" + offset + ")");
+                    }
+
+                    // Continue fetching the next page
+                    int nextOffset = offset + 100;
+                    if (nextOffset < total) {
+                        fetchAirportsPage(api, nextOffset); // recursive async call
+                    } else {
+                        Log.d("Airport API", "✅ All airports fetched!");
+                        // Once done, update your dropdowns safely on UI thread
+                        AirportDao dao = db.airportDao();
+                        List<AirportEntity> entities = dao.getAllAirports();
+                        List<AirportDto> allAirports = AirportMapper.toDtoList(entities);
+                        runOnUiThread(() -> {
+                            populateAirportDropdowns(allAirports);
+                        });
+                    }
+
+                } else {
+                    Log.e("Airport API", "❌ Response unsuccessful. Code: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<AirportsResponse> call, Throwable t) {
+                Log.e("Airport API", "💥 API call failed", t);
+            }
+        });
     }
 
 
