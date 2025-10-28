@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import com.jz_rma_projekat.airplane.database.dto.AirportDto;
 import com.jz_rma_projekat.airplane.database.entities.AirportEntity;
 import com.jz_rma_projekat.airplane.utils.Pagination;
+import com.jz_rma_projekat.airplane.utils.mappers.AirportMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,10 +27,10 @@ public class AirportsResponse {
         return pagination;
     }
 
-    private List<AirportEntity> mapToEntities(AirportsResponse response) {
+    private List<AirportEntity> toEntities(AirportsResponse response) {
         List<AirportEntity> entities = new ArrayList<>();
         for (AirportDto dto : response.data) {
-            entities.add(new AirportEntity(dto.getIataCode(), dto.getName(), dto.getCountry()));
+            entities.add(AirportMapper.toEntity(dto));
         }
         return entities;
     }

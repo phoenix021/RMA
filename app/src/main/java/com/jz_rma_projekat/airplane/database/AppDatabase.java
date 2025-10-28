@@ -8,12 +8,24 @@ import androidx.room.RoomDatabase;
 
 import com.jz_rma_projekat.airplane.database.dao.AirlineDao;
 import com.jz_rma_projekat.airplane.database.dao.AirportDao;
+import com.jz_rma_projekat.airplane.database.dao.FlightDao;
+import com.jz_rma_projekat.airplane.database.dao.RouteDao;
+import com.jz_rma_projekat.airplane.database.dao.ScheduleDao;
 import com.jz_rma_projekat.airplane.database.entities.AirlineEntity;
 import com.jz_rma_projekat.airplane.database.entities.AirportEntity;
+import com.jz_rma_projekat.airplane.database.entities.FlightEntity;
+import com.jz_rma_projekat.airplane.database.entities.RouteEntity;
+import com.jz_rma_projekat.airplane.database.entities.ScheduleEntity;
 
-@Database(entities = {AirportEntity.class, AirlineEntity.class}, version = 2, exportSchema = false)
+@Database(entities = {AirportEntity.class, AirlineEntity.class, FlightEntity.class, RouteEntity.class, ScheduleEntity.class}, version = 4, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract AirportDao airportDao();
+    public abstract FlightDao flightDao();
+
+    public abstract RouteDao routeDao();
+
+    public abstract ScheduleDao scheduleDao();
+
     public abstract AirlineDao airlineDao();
 
     private static volatile AppDatabase INSTANCE;

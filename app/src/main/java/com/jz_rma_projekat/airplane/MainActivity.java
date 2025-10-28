@@ -503,11 +503,7 @@ void populateAirportDropdowns(List<AirportDto> airports){
         new Thread(() -> {
             List<AirportEntity> airportEntities = new ArrayList<>();
             for (AirportDto airport : airports) {
-                airportEntities.add(new AirportEntity(
-                        airport.getIataCode(),
-                        airport.getName(),
-                        airport.getCountry()
-                ));
+                airportEntities.add(AirportMapper.toEntity(airport));
             }
 
             db.airportDao().insertAll(airportEntities);
@@ -523,15 +519,11 @@ void populateAirportDropdowns(List<AirportDto> airports){
                 Log.d("Room", "No airports found in DB");
             } else {
                 for (AirportEntity airport : airportEntities) {
-                    Log.d("Room", "Airport: " + airport.name + " (" + airport.iataCode + ")");
+                    Log.d("Room", "Airport: " + airport.getName() + " (" + airport.getIataCode() + ")");
                 }
             }
             List<AirportDto> airportDtos = airportEntities.stream()
-                    .map(entity -> new AirportDto(
-                            entity.iataCode,
-                            entity.name,
-                            entity.country
-                    ))
+                    .map(entity -> AirportMapper.toDto(entity))
                     .collect(Collectors.toList());
 
             runOnUiThread(() -> {
@@ -545,7 +537,7 @@ void populateAirportDropdowns(List<AirportDto> airports){
             List<String> names = new ArrayList<>();
 
             for (AirportEntity airport : airportEntities) {
-                names.add(airport.name + " (" + airport.iataCode + ")");
+                names.add(airport.getName() + " (" + airport.getIataCode() + ")");
             }
 
             runOnUiThread(() -> {
