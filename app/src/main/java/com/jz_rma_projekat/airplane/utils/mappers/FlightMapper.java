@@ -1,6 +1,7 @@
 package com.jz_rma_projekat.airplane.utils.mappers;
 
 import com.jz_rma_projekat.airplane.database.dto.FlightDto;
+import com.jz_rma_projekat.airplane.database.dto.FlightWithAirportsDto;
 import com.jz_rma_projekat.airplane.database.entities.FlightEntity;
 
 import java.util.ArrayList;
@@ -43,6 +44,43 @@ public class FlightMapper {
             entityList.add(toEntity(dto));
         }
         return entityList;
+    }
+
+    public static FlightWithAirportsDto flightWithAirportstoDto(FlightEntity flightEntity, String departureAirportName, String arrivalAirportName) {
+        return new FlightWithAirportsDto(
+                flightEntity.getId().toString(),  // Flight ID
+                flightEntity.getFlightNumber(),  // Flight Number
+                flightEntity.getDepartureTime(),  // Departure Time
+                flightEntity.getArrivalTime(),  // Arrival Time
+                departureAirportName,  // Departure Airport Name
+                arrivalAirportName,  // Arrival Airport Name
+                flightEntity.getStatus(),  // Flight Status
+                flightEntity.getDepartureAirportId(),  // Departure Airport ID
+                flightEntity.getArrivalAirportId()  // Arrival Airport ID
+        );
+    }
+
+    // Converts FlightWithAirportsDto to FlightEntity
+    public static FlightEntity flightWithAirportsDtoToEntity(FlightWithAirportsDto dto) {
+        // Assuming the FlightEntity constructor accepts all relevant fields
+        return new FlightEntity(
+                null,               // Room will automatically create the id //to check
+                dto.getFlightNumber(),           // Map the flightNumber
+                dto.getDepartureTime(),         // Map the departureTime
+                dto.getArrivalTime(),           // Map the arrivalTime
+                dto.getStatus(),                // Map the status
+                dto.getDepartureAirportId(),    // Map departureAirportId
+                dto.getArrivalAirportId()       // Map arrivalAirportId
+        );
+    }
+
+    // You could also implement a method to convert a list of DTOs to a list of entities:
+    public static List<FlightEntity> flightWithAirportsDtoToEntityList(List<FlightWithAirportsDto> dtoList) {
+        List<FlightEntity> entities = new ArrayList<>();
+        for (FlightWithAirportsDto dto : dtoList) {
+            entities.add(flightWithAirportsDtoToEntity(dto));  // Add each converted entity to the list
+        }
+        return entities;
     }
 }
 

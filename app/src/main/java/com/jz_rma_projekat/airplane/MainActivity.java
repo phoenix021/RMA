@@ -24,16 +24,22 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.material.snackbar.Snackbar;
 import com.jz_rma_projekat.airplane.database.AppDatabase;
 import com.jz_rma_projekat.airplane.database.api_models.AirlineResponse;
+import com.jz_rma_projekat.airplane.database.api_models.FlightResponse;
 import com.jz_rma_projekat.airplane.database.dao.AirlineDao;
 import com.jz_rma_projekat.airplane.database.dao.AirportDao;
+import com.jz_rma_projekat.airplane.database.dao.FlightDao;
 import com.jz_rma_projekat.airplane.database.dto.AirlineDto;
 import com.jz_rma_projekat.airplane.database.dto.AirportDto;
+import com.jz_rma_projekat.airplane.database.dto.FlightDto;
+import com.jz_rma_projekat.airplane.database.dto.FlightWithAirportsDto;
 import com.jz_rma_projekat.airplane.database.entities.AirlineEntity;
+import com.jz_rma_projekat.airplane.database.entities.FlightEntity;
 import com.jz_rma_projekat.airplane.databinding.ActivityMainBinding;
 import com.jz_rma_projekat.airplane.database.entities.AirportEntity;
 import com.jz_rma_projekat.airplane.database.api_models.AirportsResponse;
 import com.jz_rma_projekat.airplane.utils.mappers.AirlineMapper;
 import com.jz_rma_projekat.airplane.utils.mappers.AirportMapper;
+import com.jz_rma_projekat.airplane.utils.mappers.FlightMapper;
 
 //import androidx.core.app.ActivityCompat;
 import androidx.annotation.NonNull;
@@ -509,6 +515,33 @@ void populateAirportDropdowns(List<AirportDto> airports){
             db.airportDao().insertAll(airportEntities);
             Log.d("Room", "Airports saved to DB");
         }).start();
+    }
+
+
+    public void fetchAllFlights(){
+        AviationStackApi api = RetrofitClient.getApi();
+        Call<FlightResponse> call = api.getFlights(API_KEY);
+        FlightDao flightDao = db.flightDao();
+
+        call.enqueue(new Callback<FlightResponse>() {
+            @Override
+            public void onResponse(Call<FlightResponse> call, Response<FlightResponse> response) {
+                if (response.isSuccessful()) {
+                    List<FlightWithAirportsDto> flights = response.body().getData();
+                    // Insert or update the flights into Room database
+                    for (FlightWithAirportsDto flight : flights) {
+                        FlightEntity entity = FlightMapper.flightWithAirportsDtoToEntity(flight);
+                        flightDao.insert(entity); // Insert into Room DB
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<FlightResponse> call, Throwable t) {
+                // Handle failure
+            }
+        });
+
     }
 
     public void getAirportsFromDatabase() {
@@ -1021,15 +1054,15 @@ void populateAirportDropdowns(List<AirportDto> airports){
         Date now = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-DD", Locale.getDefault());
         String dateString = sdf.format(now);
-        Call<ApiResponse> call = api.getFlightsByDate(API_KEY, dateString);
+        Call<FlightResponse> call = api.getFlightsByDate(API_KEY, dateString);
 
-        call.enqueue(new Callback<ApiResponse>() {
+        call.enqueue(new Callback<FlightResponse>() {
             @Override
-            public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
+            public void onResponse(Call<FlightResponse> call, Response<FlightResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    List<FlightData> flights = response.body().data;
-                    for (FlightData flight : flights) {
-                        Log.d("Flight", "Flight: " + flight.flight.toString() + " from " + flight.departure.airport + " to " + flight.arrival.airport);
+                    List<FlightWithAirportsDto> flights = response.body().getData();
+                    for (FlightWithAirportsDto flight : flights) {
+                        Log.d("Flight", "Flight: " + flight.toString() + " from " + flight.getDepartureAirportName() + " to " + flight.getArrivalAirportName());
                     }
                     adapter.updateFlights(flights);
                 } else {
@@ -1051,7 +1084,7 @@ void populateAirportDropdowns(List<AirportDto> airports){
 
 
             @Override
-            public void onFailure(Call<ApiResponse> call, Throwable t) {
+            public void onFailure(Call<FlightResponse> call, Throwable t) {
                 Log.e("API Error", "JELENA: " + call.toString());
                 t.printStackTrace();
             }

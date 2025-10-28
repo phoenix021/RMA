@@ -17,6 +17,21 @@ public class FlightEntity {
     private String departureAirportId;  // Foreign key to AirportEntity
     private String arrivalAirportId;    // Foreign key to AirportEntity
 
+    public FlightEntity() {
+    }
+
+    // Constructor with all fields for easy initialization
+    public FlightEntity(Long id, String flightNumber, String departureTime, String arrivalTime,
+                        String status, String departureAirportId, String arrivalAirportId) {
+        this.id = id;
+        this.flightNumber = flightNumber;
+        this.departureTime = departureTime;
+        this.arrivalTime = arrivalTime;
+        this.status = status;
+        this.departureAirportId = departureAirportId;
+        this.arrivalAirportId = arrivalAirportId;
+    }
+
     // Getters and setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

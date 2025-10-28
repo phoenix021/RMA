@@ -7,13 +7,16 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.jz_rma_projekat.airplane.database.dto.FlightDto;
+import com.jz_rma_projekat.airplane.database.dto.FlightWithAirportsDto;
+
 import java.util.List;
 
 public class FlightsAdapter extends RecyclerView.Adapter<FlightsAdapter.FlightViewHolder> {
 
-    private List<FlightData> flights;
+    private List<FlightWithAirportsDto> flights;
 
-    public FlightsAdapter(List<FlightData> flights) {
+    public FlightsAdapter(List<FlightWithAirportsDto> flights) {
         this.flights = flights;
     }
 
@@ -27,11 +30,11 @@ public class FlightsAdapter extends RecyclerView.Adapter<FlightsAdapter.FlightVi
 
     @Override
     public void onBindViewHolder(@NonNull FlightViewHolder holder, int position) {
-        FlightData flight = flights.get(position);
-        holder.tvFlightNumber.setText("Flight: " + flight.flight.toString());
-        holder.tvRoute.setText(flight.departure.airport + " → " + flight.arrival.airport);
-        holder.tvTime.setText("Departure: " + flight.departure.scheduled +
-                "\nArrival: " + flight.arrival.scheduled);
+        FlightWithAirportsDto flight = flights.get(position);
+        holder.tvFlightNumber.setText("Flight: " + flight.toString());
+        holder.tvRoute.setText(flight.getDepartureAirportName() + " → " + flight.getArrivalAirportName());
+        holder.tvTime.setText("Departure: " + flight.getDepartureTime() +
+                "\nArrival: " + flight.getArrivalTime());
     }
 
     @Override
@@ -51,7 +54,7 @@ public class FlightsAdapter extends RecyclerView.Adapter<FlightsAdapter.FlightVi
     }
 
     // Optionally add a method to update data:
-    public void updateFlights(List<FlightData> newFlights) {
+    public void updateFlights(List<FlightWithAirportsDto> newFlights) {
         flights.clear();
         flights.addAll(newFlights);
         notifyDataSetChanged();
