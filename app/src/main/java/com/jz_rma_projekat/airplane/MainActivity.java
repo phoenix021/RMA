@@ -4,6 +4,8 @@ import android.Manifest;
 import android.app.DatePickerDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -21,11 +23,16 @@ import com.google.android.gms.location.LocationRequest;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.jz_rma_projekat.airplane.database.AppDatabase;
+import com.jz_rma_projekat.airplane.database.api_models.AirlineResponse;
+import com.jz_rma_projekat.airplane.database.dao.AirlineDao;
 import com.jz_rma_projekat.airplane.database.dao.AirportDao;
+import com.jz_rma_projekat.airplane.database.dto.AirlineDto;
 import com.jz_rma_projekat.airplane.database.dto.AirportDto;
+import com.jz_rma_projekat.airplane.database.entities.AirlineEntity;
 import com.jz_rma_projekat.airplane.databinding.ActivityMainBinding;
 import com.jz_rma_projekat.airplane.database.entities.AirportEntity;
 import com.jz_rma_projekat.airplane.database.api_models.AirportsResponse;
+import com.jz_rma_projekat.airplane.utils.mappers.AirlineMapper;
 import com.jz_rma_projekat.airplane.utils.mappers.AirportMapper;
 
 //import androidx.core.app.ActivityCompat;
@@ -34,7 +41,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 
+import android.os.Environment;
 import android.os.Looper;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -45,6 +54,8 @@ import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -54,9 +65,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import retrofit2.Call;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -86,9 +101,14 @@ public class MainActivity extends AppCompatActivity {
 
     private AppDatabase db;
 
+    Button downloadBtn;
+    Button shareAirlinesBtn;
+    Button downloadAllBtn;
+
     AutoCompleteTextView etCountry ;
     AutoCompleteTextView etOrigin ;
     AutoCompleteTextView etDestination;
+    AutoCompleteTextView etAirplanes;
 
     ArrayList<AirportDto> airportList = new ArrayList<>();
     EditText etDate;
@@ -126,6 +146,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        shareAirlinesBtn = findViewById(R.id.btnShareAirlines);
+        shareAirlinesBtn.setOnClickListener(v -> shareAirlinesCsv());
+
+        downloadBtn = findViewById(R.id.btnDownloadAirlines);
+        downloadBtn.setOnClickListener(v -> saveAirlinesCsvToDownloads());
+
+        downloadAllBtn = findViewById(R.id.btnDownloadAll);
+        downloadAllBtn.setOnClickListener(v -> downloadAllCsvs());
+
+        //airplanesJsonBtn = findViewById(R.id.btnAirplanesJson);
+        //airplanesJsonBtn.setOnClickListener(v -> downloadAllCsvs());
+
+
         // Only add the fragment if this is the first creation
         if (savedInstanceState == null) {
             getSupportFragmentManager()
@@ -138,6 +171,7 @@ public class MainActivity extends AppCompatActivity {
         etOrigin = findViewById(R.id.etOrigin);
         etDestination = findViewById(R.id.etDestination);
         etDate = findViewById(R.id.etDate);
+        etAirplanes = findViewById(R.id.airplanes);
         btnSearchFlights = findViewById(R.id.btnSearchFlights);
 
         // Date picker
@@ -171,10 +205,11 @@ public class MainActivity extends AppCompatActivity {
 
         db = AppDatabase.getInstance(getApplicationContext());
         new Thread(() -> {
-            AirportDao dao = db.airportDao();
+            AirportDao airportDao = db.airportDao();
+            AirlineDao airlineDao = db.airlineDao();
 
-            int count = dao.getCount(); // number of records
-            boolean exists = dao.hasAny(); // true if at least one row exists
+            int count = airportDao.getCount(); // number of records
+            boolean exists = airportDao.hasAny(); // true if at least one row exists
 
             Log.d("MainActivity", "Number of airports: " + count);
             Log.d("MainActivity", "Are there any airports? " + exists);
@@ -183,11 +218,23 @@ public class MainActivity extends AppCompatActivity {
             if (!exists) {
                 fetchAndSaveAllAirports();
             } else {
-                count = dao.getCount();
+                count = airportDao.getCount();
                 Log.d("MainActivity", "Number of airports: " + count);
-                List<AirportEntity> airportEntities = dao.getAllAirports();
+                List<AirportEntity> airportEntities = airportDao.getAllAirports();
                 List<AirportDto> dtos =  AirportMapper.toDtoList(airportEntities);
                 runOnUiThread(() -> populateAirportDropdowns(dtos));
+            }
+
+            count = airlineDao.getCount(); // number of records
+            exists = airlineDao.hasAny(); // true if at least one row exists
+            if (!exists) {
+                fetchAndSaveAllAirlines();
+            } else {
+                count = airlineDao.getCount();
+                Log.d("MainActivity", "Number of airlines: " + count);
+                List<AirlineEntity> airlineEntities = airlineDao.getAllAirlines();
+                //List<AirlineDto> dtos =  AirportMapper.toDtoList(airlineEntities);
+                //runOnUiThread(() -> populateAirportDropdowns(dtos));
             }
         }).start();
 
@@ -299,13 +346,53 @@ void populateAirportDropdowns(List<AirportDto> airports){
             airportNames
     );
 
+
+
     etCountry = findViewById(R.id.etCountry);
     etOrigin = findViewById(R.id.etOrigin);
     etDestination = findViewById(R.id.etDestination);
+    //etAirplanes = findViewById(R.id.airplanes);
 
     etOrigin.setAdapter(adapter);
     etDestination.setAdapter(adapter);
     etCountry.setAdapter(countryAdapter);
+    //etAirplanes.setAdapter(airplanesAdapter);
+
+
+    new Thread(new Runnable() {
+        @Override
+        public void run() {
+            // This block runs in the background thread
+            AirlineDao airlineDao = db.airlineDao();
+            etAirplanes = findViewById(R.id.airplanes);
+
+            // Perform the database operation
+            List<AirlineDto> airlines = AirlineMapper.toDtoList(airlineDao.getAllAirlines());
+
+            // Convert the list of AirlineDto to a list of Strings
+            List<String> airlineStrings = airlines.stream()
+                    .map(airline -> String.format("%s (%s) - %s - %s",
+                            airline.getAirlineName(),
+                            airline.getIataCode(),
+                            airline.getCountryName(),
+                            airline.getFleetSize()))
+                    .collect(Collectors.toList());
+
+            // Now that the background task is complete, update the UI on the main thread
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    // Update UI elements here
+                    ArrayAdapter<String> airplanesAdapter = new ArrayAdapter<>(
+                            MainActivity.this,
+                            android.R.layout.simple_list_item_1,
+                            airlineStrings
+                    );
+                    etAirplanes.setAdapter(airplanesAdapter);
+                }
+            });
+        }
+    }).start();
 }
 
 
@@ -392,7 +479,7 @@ void populateAirportDropdowns(List<AirportDto> airports){
     @Override
     protected void onPause() {
         super.onPause();
-        stopLocationUpdates();
+        //stopLocationUpdates();
     }
 
     private void stopLocationUpdates() {
@@ -618,12 +705,26 @@ void populateAirportDropdowns(List<AirportDto> airports){
     private void appendAirportsToCsv(List<AirportDto> airports) {
         try (FileWriter writer = new FileWriter(csvFile, true)) { // true = append mode
             for (AirportDto airport : airports) {
-                writer.append(airport.getIataCode()).append(",");
-                writer.append(airport.getName().replace(",", " ")).append(",");
-                writer.append("".replace(",", " ")).append(","); // TODO: airport.getCity()
-                writer.append(airport.getCountry().replace(",", " ")).append(",");
-                writer.append(String.valueOf("")).append(","); // TODO: airport.getLatitude()
-                writer.append(String.valueOf("")).append("\n"); // TODO:airport.getLongitude()
+                // IATA Code
+                writer.append(airport.getIataCode() != null ? airport.getIataCode() : "N/A").append(",");
+
+                // Name (replacing commas with spaces)
+                writer.append(airport.getName() != null ? airport.getName().replace(",", " ") : "N/A").append(",");
+
+                // City (currently a placeholder, to be updated)
+                //String city = airport.getCity() != null ? airport.getCity().replace(",", " ") : "N/A";
+                //writer.append(city).append(",");
+
+                // Country (replacing commas with spaces)
+                writer.append(airport.getCountry() != null ? airport.getCountry().replace(",", " ") : "N/A").append(",");
+
+                // Latitude (to be updated, currently empty string replaced with N/A)
+                //String latitude = airport.getLatitude() != null ? String.valueOf(airport.getLatitude()) : "N/A";
+                //writer.append(latitude).append(",");
+
+                // Longitude (to be updated, currently empty string replaced with N/A)
+                //String longitude = airport.getLongitude() != null ? String.valueOf(airport.getLongitude()) : "N/A";
+                //writer.append(longitude).append("\n");
             }
             writer.flush();
             Log.d("Airport CSV", "Appended " + airports.size() + " airports to CSV.");
@@ -631,6 +732,286 @@ void populateAirportDropdowns(List<AirportDto> airports){
             Log.e("Airport CSV", "Error appending to CSV", e);
         }
     }
+
+    private static final int REQUEST_WRITE_STORAGE_PERMISSION = 1;
+    private void saveAirlinesJsonToExternalStorage(String jsonResponse) {
+        // Check if the permission is granted
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED) {
+            // Permission granted, proceed with saving the file
+            writeJsonToFile(jsonResponse);
+        } else {
+            // Permission not granted, request it
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_WRITE_STORAGE_PERMISSION);
+        }
+    }
+
+    private void writeJsonToFile(String jsonResponse) {
+        File directory = new File(Environment.getExternalStorageDirectory(), "AviationApp");
+        if (!directory.exists()) {
+            directory.mkdirs();  // Create the directory if it doesn't exist
+        }
+
+        File file = new File(directory, "airline.json");
+
+        try {
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(jsonResponse.getBytes());
+            fos.close();
+            Log.d("Airline API", "JSON saved to external storage: " + file.getAbsolutePath());
+        } catch (IOException e) {
+            Log.e("Airline API", "Error saving JSON to external storage", e);
+        }
+    }
+
+    private void appendJsonToExternalStorage(String jsonResponse) {
+        // Check if the permission is granted
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED) {
+
+            File directory = new File(Environment.getExternalStorageDirectory(), "AviationApp");
+            if (!directory.exists()) {
+                directory.mkdirs();  // Create the directory if it doesn't exist
+            }
+
+            File file = new File(directory, "airline.json");
+
+            try {
+                // Open the file in append mode
+                FileOutputStream fos = new FileOutputStream(file, true);  // 'true' means append
+                fos.write(jsonResponse.getBytes());
+                fos.write("\n".getBytes());  // Add a newline after each page's JSON data
+                fos.close();
+                Log.d("Airline API", "JSON appended to external storage: " + file.getAbsolutePath());
+            } catch (IOException e) {
+                Log.e("Airline API", "Error appending JSON to external storage", e);
+            }
+        } else {
+            // Request permission if not granted
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    1);
+        }
+    }
+
+    private void closeJsonArray() {
+        File directory = new File(Environment.getExternalStorageDirectory(), "AviationApp");
+        File file = new File(directory, "airline.json");
+
+        try {
+            FileOutputStream fos = new FileOutputStream(file, true);
+            fos.write("\n]".getBytes());  // Close the array
+            fos.close();
+            Log.d("Airline API", "JSON array closed.");
+        } catch (IOException e) {
+            Log.e("Airline API", "Error closing JSON array", e);
+        }
+    }
+
+    private void fetchAndSaveAllAirlines() {
+        AviationStackApi api = RetrofitClient.getApi();
+        Log.d("Airline API", "Starting airline fetch from offset 0");
+        fetchAirlinesPage(api, 0); // start from offset 0
+    }
+
+    // Recursive async function to fetch pages
+    private void fetchAirlinesPage(AviationStackApi api, int offset) {
+        Call<AirlineResponse> call = api.getAirlines(API_KEY, 100, offset);
+
+        call.enqueue(new Callback<AirlineResponse>() {
+            @Override
+            public void onResponse(Call<AirlineResponse> call, Response<AirlineResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    AirlineResponse data = response.body();
+                    List<AirlineDto> airlines = data.getData();
+                    int total = data.getPagination().getTotal();
+
+                    if (airlines != null && !airlines.isEmpty()) {
+                        saveAirlinesToDatabase(airlines);  // Save to Room Database
+                        Log.d("Airline API", "Saved " + airlines.size() +
+                                " airlines (offset=" + offset + ")");
+                        appendAirlinesToCsv(airlines);
+                        appendJsonToExternalStorage(response.body().toString());
+                    }
+
+                    // Continue fetching the next page
+                    //int nextOffset = offset + 100;
+                    int nextOffset = offset + 1000; // just fot development purposes because of the api limits are invalved, return to 100 for prod
+                    if (nextOffset < total) {
+                        fetchAirlinesPage(api, nextOffset); // recursive async call
+                    } else {
+                        Log.d("Airline API", "✅ All airlines fetched!");
+                        closeJsonArray();
+                        //AirlineDao dao = db.airlineDao();
+                        //List<AirlineEntity> entities = dao.getAllAirlines();
+                        //List<AirlineDto> allAirlines = AirlineMapper.toDtoList(entities);
+                        runOnUiThread(() -> {
+                             // TODO: make some notification or something
+                        });
+                    }
+
+                } else {
+                    Log.e("Airline API", "❌ Response unsuccessful. Code: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<AirlineResponse> call, Throwable t) {
+                Log.e("Airline API", "❌ Request failed: " + t.getMessage());
+                // TODO: make some tost or something
+            }
+        });
+    }
+
+    private void saveAirlinesToDatabase(List<AirlineDto> airlineDtos) {
+        // Convert List<AirlineDto> to List<AirlineEntity> using the AirlineMapper
+        List<AirlineEntity> airlineEntities = AirlineMapper.toEntityList(airlineDtos);
+
+        // Insert into the database asynchronously
+        new Thread(() -> {
+            AirlineDao dao = db.airlineDao();
+            dao.insertAirlines(airlineEntities);
+        }).start();
+    }
+
+    private void appendAirlinesToCsv(List<AirlineDto> airlines) {
+        File csvFile = new File(getExternalFilesDir(null), "airlines.csv");
+
+        try (FileWriter fw = new FileWriter(csvFile, true);
+             BufferedWriter bw = new BufferedWriter(fw)) {
+
+            for (AirlineDto a : airlines) {
+                String line = String.join(",",
+                        a.getAirlineId(),
+                        a.getAirlineName(),
+                        a.getIataCode(),
+                        a.getIcaoCode(),
+                        a.getCallsign(),
+                        a.getHubCode(),
+                        a.getCountryIso2(),
+                        a.getCountryName(),
+                        a.getDateFounded(),
+                        a.getFleetSize(),
+                        a.getFleetAverageAge(),
+                        a.getStatus(),
+                        a.getType(),
+                        a.getIataPrefixAccounting()
+                );
+                bw.write(line);
+                bw.newLine();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void shareAirlinesCsv() {
+        File csvFile = new File(getExternalFilesDir(null), "airlines.csv");
+
+        if (!csvFile.exists()) {
+            Toast.makeText(this, "CSV file not found!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Uri fileUri = FileProvider.getUriForFile(
+                this,
+                getPackageName() + ".provider",
+                csvFile
+        );
+
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/csv");
+        intent.putExtra(Intent.EXTRA_STREAM, fileUri);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        startActivity(Intent.createChooser(intent, "Download or share CSV"));
+    }
+
+    private void saveAirlinesCsvToDownloads() {
+        File csvFile = new File(getExternalFilesDir(null), "airlines.csv");
+
+        if (!csvFile.exists()) {
+            Toast.makeText(this, "CSV file not found!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String fileName = "airlines.csv";
+
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+        values.put(MediaStore.Downloads.MIME_TYPE, "text/csv");
+        values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+
+        ContentResolver resolver = getContentResolver();
+        Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+
+        if (uri != null) {
+            try (OutputStream out = resolver.openOutputStream(uri);
+                 FileInputStream in = new FileInputStream(csvFile)) {
+
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = in.read(buffer)) > 0) {
+                    out.write(buffer, 0, length);
+                }
+
+                Toast.makeText(this, "CSV saved to Downloads", Toast.LENGTH_SHORT).show();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                Toast.makeText(this, "Failed to save CSV: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Toast.makeText(this, "Failed to create file in Downloads", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void copyCsvToDownloads(File csvFile, String fileName) {
+        if (!csvFile.exists()) {
+            Toast.makeText(this, fileName + " not found!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+        values.put(MediaStore.Downloads.MIME_TYPE, "text/csv");
+        values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+
+        ContentResolver resolver = getContentResolver();
+        Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+
+        if (uri != null) {
+            try (OutputStream out = resolver.openOutputStream(uri);
+                 FileInputStream in = new FileInputStream(csvFile)) {
+
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = in.read(buffer)) > 0) {
+                    out.write(buffer, 0, length);
+                }
+
+                Toast.makeText(this, fileName + " saved to Downloads", Toast.LENGTH_SHORT).show();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                Toast.makeText(this, "Failed to save " + fileName + ": " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Toast.makeText(this, "Failed to create " + fileName + " in Downloads", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void downloadAllCsvs() {
+        File airportsCsv = new File(getExternalFilesDir(null), "airports.csv");
+        File airlinesCsv = new File(getExternalFilesDir(null), "airlines.csv");
+
+        copyCsvToDownloads(airportsCsv, "airports.csv");
+        copyCsvToDownloads(airlinesCsv, "airlines.csv");
+    }
+
     public void doAviationAPIfunctions(){
         rvFlights = findViewById(R.id.rvFlights);
         rvFlights.setLayoutManager(new LinearLayoutManager(this));

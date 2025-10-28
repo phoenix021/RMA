@@ -6,12 +6,15 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
+import com.jz_rma_projekat.airplane.database.dao.AirlineDao;
 import com.jz_rma_projekat.airplane.database.dao.AirportDao;
+import com.jz_rma_projekat.airplane.database.entities.AirlineEntity;
 import com.jz_rma_projekat.airplane.database.entities.AirportEntity;
 
-@Database(entities = {AirportEntity.class}, version = 1)
+@Database(entities = {AirportEntity.class, AirlineEntity.class}, version = 2, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract AirportDao airportDao();
+    public abstract AirlineDao airlineDao();
 
     private static volatile AppDatabase INSTANCE;
 

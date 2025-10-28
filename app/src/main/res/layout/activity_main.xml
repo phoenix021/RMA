@@ -63,6 +63,16 @@
 
         <!-- Origin Airport -->
         <AutoCompleteTextView
+            android:id="@+id/airplanes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Airplanes"
+            android:inputType="text"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Origin Airport -->
+        <AutoCompleteTextView
             android:id="@+id/etOrigin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -91,6 +101,8 @@
             android:padding="12dp"
             android:layout_marginBottom="24dp" />
 
+
+
         <!-- Search Button -->
         <Button
             android:id="@+id/btnSearchFlights"
@@ -100,6 +112,24 @@
             android:backgroundTint="@color/purple_500"
             android:textColor="@android:color/white"
             android:padding="12dp" />
+
+        <Button
+            android:id="@+id/btnShareAirlines"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Share Airlines CSV"/>
+
+        <Button
+            android:id="@+id/btnDownloadAirlines"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Download Airlines CSV"/>
+
+        <Button
+            android:id="@+id/btnDownloadAll"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Download Airlines CSV"/>
 
         <!-- RecyclerView as default content -->
         <androidx.recyclerview.widget.RecyclerView
