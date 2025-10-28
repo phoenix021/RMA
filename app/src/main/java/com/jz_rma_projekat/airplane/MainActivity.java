@@ -2,6 +2,8 @@ package com.jz_rma_projekat.airplane;
 
 import android.Manifest;
 import android.app.DatePickerDialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -9,6 +11,7 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 
@@ -40,6 +43,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -72,6 +77,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String API_KEY = "07d66aaa5c32f0546552c090cd95403f"; // Replace with your key
     private static final String DEBUG_TAG = "MainActivity";
 
+    private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 1002;
+
     private RecyclerView rvFlights;
     private FlightsAdapter adapter;
 
@@ -99,6 +106,8 @@ public class MainActivity extends AppCompatActivity {
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        createNotificationChannel();
 
         //setSupportActionBar(binding.toolbar);
 
@@ -136,6 +145,7 @@ public class MainActivity extends AppCompatActivity {
                     (view, year, month, dayOfMonth) -> {
                         String selectedDate = String.format(Locale.getDefault(), "%04d-%02d-%02d", year, month + 1, dayOfMonth);
                         etDate.setText(selectedDate);
+                        showFlightNotification("Selection date: ", selectedDate);
                     },
                     calendar.get(Calendar.YEAR),
                     calendar.get(Calendar.MONTH),
@@ -207,6 +217,53 @@ public class MainActivity extends AppCompatActivity {
     //Google Play Location API pruža i druge servise kao sto su:
     //        ◦ Dobijanje adrese na osnovu lokacije – geocoding,
     //        ◦ Definisanje oblasti u odnosu na neku lokaciju - geofences, .
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            String channelId = "flight_alerts";
+            String channelName = "Flight Alerts";
+            String description = "Notifications for upcoming flights";
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+
+            NotificationChannel channel = new NotificationChannel(channelId, channelName, importance);
+            channel.setDescription(description);
+
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+    private void showFlightNotification(String title, String message) {
+        // Check if permission is granted
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Request permission if not granted (Android 13+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+               // ActivityCompat.requestPermissions(
+               //         this,
+               //         new String[]{Manifest.permission.POST_NOTIFICATIONS},
+               //         NOTIFICATION_PERMISSION_REQUEST_CODE
+                //);
+
+                if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_REQUEST_CODE);
+                }
+            }
+            return;
+        }
+
+        // Build the notification
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "flight_alerts")
+                .setSmallIcon(R.drawable.airplane_icon)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true);
+
+        // Show the notification
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        notificationManager.notify(1, builder.build());
+    }
 
 void populateAirportDropdowns(List<AirportDto> airports){
     List<String> airportNames = new ArrayList<>(0);
@@ -318,6 +375,15 @@ void populateAirportDropdowns(List<AirportDto> airports){
             } else {
                 // User denied permission
                 Log.e("PERMISSION", "Location permission denied by user");
+            }
+        }
+
+        if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // User granted permission → you can safely send the notification now
+                showFlightNotification("Flight Updates Enabled", "You will now receive flight alerts ✈️");
+            } else {
+                Toast.makeText(this, "Notification permission denied.", Toast.LENGTH_SHORT).show();
             }
         }
     }
