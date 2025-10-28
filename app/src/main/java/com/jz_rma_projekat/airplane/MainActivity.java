@@ -54,6 +54,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import retrofit2.Call;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -272,7 +274,7 @@ void populateAirportDropdowns(List<AirportDto> airports){
     {
         if (airport.getName() != null && airport.getIataCode() != null) {
             String formatted = airport.getName() + " (" + airport.getIataCode() + ") Country:" + airport.getCountry();
-            Log.e("MainActivity", "Populating airport: " + formatted);
+           // Log.e("MainActivity", "Populating airport: " + formatted);
 
             airportNames.add(formatted);
         }
@@ -547,6 +549,7 @@ void populateAirportDropdowns(List<AirportDto> airports){
     }
 
     private void fetchAndSaveAllAirports() {
+        initCsvFile();
         AviationStackApi api = RetrofitClient.getApi();
         Log.d("Airport API", "Starting airport fetch from offset 0");
         fetchAirportsPage(api, 0); // start from offset 0
@@ -568,6 +571,7 @@ void populateAirportDropdowns(List<AirportDto> airports){
                         saveAirportsToDatabase(airports);
                         Log.d("Airport API", "Saved " + airports.size() +
                                 " airports (offset=" + offset + ")");
+                        appendAirportsToCsv(airports);
                     }
 
                     // Continue fetching the next page
@@ -597,7 +601,36 @@ void populateAirportDropdowns(List<AirportDto> airports){
         });
     }
 
+    private File csvFile;
 
+    private void initCsvFile() {
+        csvFile = new File(getExternalFilesDir(null), "airports.csv");
+        try (FileWriter writer = new FileWriter(csvFile)) {
+            // Write header once
+            writer.append("iata_code,name,city,country,latitude,longitude\n");
+            writer.flush();
+            Log.d("Airport CSV", "CSV file initialized at: " + csvFile.getAbsolutePath());
+        } catch (IOException e) {
+            Log.e("Airport CSV", "Error initializing CSV", e);
+        }
+    }
+
+    private void appendAirportsToCsv(List<AirportDto> airports) {
+        try (FileWriter writer = new FileWriter(csvFile, true)) { // true = append mode
+            for (AirportDto airport : airports) {
+                writer.append(airport.getIataCode()).append(",");
+                writer.append(airport.getName().replace(",", " ")).append(",");
+                writer.append("".replace(",", " ")).append(","); // TODO: airport.getCity()
+                writer.append(airport.getCountry().replace(",", " ")).append(",");
+                writer.append(String.valueOf("")).append(","); // TODO: airport.getLatitude()
+                writer.append(String.valueOf("")).append("\n"); // TODO:airport.getLongitude()
+            }
+            writer.flush();
+            Log.d("Airport CSV", "Appended " + airports.size() + " airports to CSV.");
+        } catch (IOException e) {
+            Log.e("Airport CSV", "Error appending to CSV", e);
+        }
+    }
     public void doAviationAPIfunctions(){
         rvFlights = findViewById(R.id.rvFlights);
         rvFlights.setLayoutManager(new LinearLayoutManager(this));
