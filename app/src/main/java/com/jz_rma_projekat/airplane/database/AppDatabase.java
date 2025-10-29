@@ -17,6 +17,9 @@ import com.jz_rma_projekat.airplane.database.entities.FlightEntity;
 import com.jz_rma_projekat.airplane.database.entities.RouteEntity;
 import com.jz_rma_projekat.airplane.database.entities.ScheduleEntity;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 @Database(entities = {AirportEntity.class, AirlineEntity.class, FlightEntity.class, RouteEntity.class, ScheduleEntity.class}, version = 4, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract AirportDao airportDao();
@@ -29,6 +32,10 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract AirlineDao airlineDao();
 
     private static volatile AppDatabase INSTANCE;
+
+    //private static final int NUMBER_OF_THREADS = 4;
+    //public static final ExecutorService databaseWriteExecutor =
+    //        Executors.newFixedThreadPool(NUMBER_OF_THREADS);
 
     public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {

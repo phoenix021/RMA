@@ -1,4 +1,4 @@
-package com.jz_rma_projekat.airplane;
+package com.jz_rma_projekat.airplane.network;
 
 import com.jz_rma_projekat.airplane.database.api_models.AirlineResponse;
 import com.jz_rma_projekat.airplane.database.api_models.AirportsResponse;

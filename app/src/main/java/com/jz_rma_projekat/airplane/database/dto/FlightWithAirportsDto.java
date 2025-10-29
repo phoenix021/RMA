@@ -1,9 +1,13 @@
 package com.jz_rma_projekat.airplane.database.dto;
 
+import androidx.room.ColumnInfo;
+import androidx.room.Ignore;
+
 import com.google.gson.annotations.SerializedName;
 
 public class FlightWithAirportsDto {
     @SerializedName("flight_number")
+    @ColumnInfo(name = "id")
     public String flightNumber;
 
     @SerializedName("departure_time")
@@ -34,7 +38,7 @@ public class FlightWithAirportsDto {
     public FlightWithAirportsDto() {
     }
 
-    // Constructor for easy initialization
+    @Ignore
     public FlightWithAirportsDto(String flightId, String flightNumber, String departureTime,
                                  String arrivalTime, String departureAirportName, String arrivalAirportName,
                                  String status, String departureAirportId, String arrivalAirportId) {

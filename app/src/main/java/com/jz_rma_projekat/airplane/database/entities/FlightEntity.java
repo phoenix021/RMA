@@ -2,6 +2,7 @@ package com.jz_rma_projekat.airplane.database.entities;
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 @Entity(tableName = "flights")
@@ -20,7 +21,7 @@ public class FlightEntity {
     public FlightEntity() {
     }
 
-    // Constructor with all fields for easy initialization
+    @Ignore
     public FlightEntity(Long id, String flightNumber, String departureTime, String arrivalTime,
                         String status, String departureAirportId, String arrivalAirportId) {
         this.id = id;

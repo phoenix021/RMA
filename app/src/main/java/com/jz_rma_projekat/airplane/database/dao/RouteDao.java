@@ -1,9 +1,12 @@
 package com.jz_rma_projekat.airplane.database.dao;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
+import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import com.jz_rma_projekat.airplane.database.entities.RouteEntity;
 
@@ -43,5 +46,40 @@ public interface RouteDao {
     // Delete all routes
     @Query("DELETE FROM routes")
     void deleteAllRoutes();
+
+    // Insert or replace
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insert(RouteEntity route);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertAll(List<RouteEntity> routes);
+
+    // Update route
+    @Update
+    void update(RouteEntity route);
+
+    // Delete route
+    @Delete
+    void delete(RouteEntity route);
+
+    // Delete all
+    @Query("DELETE FROM routes")
+    void deleteAll();
+
+    // Observed list of all routes
+    @Query("SELECT * FROM routes ORDER BY departureAirportIata, arrivalAirportIata")
+    LiveData<List<RouteEntity>> getAllRoutesLive();
+
+    // Find by departure airport
+    @Query("SELECT * FROM routes WHERE departureAirportIata = :departureAirportIata")
+    LiveData<List<RouteEntity>> findRoutesByDepartureAirport(String departureAirportIata);
+
+    // Find by arrival airport
+    @Query("SELECT * FROM routes WHERE arrivalAirportIata = :arrivalAirportIata")
+    LiveData<List<RouteEntity>> findRoutesByArrivalAirport(String arrivalAirportIata);
+
+    // Get one by both airports
+    @Query("SELECT * FROM routes WHERE departureAirportIata = :departureAirportIata AND arrivalAirportIata = :arrivalAirportIata LIMIT 1")
+    LiveData<RouteEntity> findRouteByAirports(String departureAirportIata, String arrivalAirportIata);
 }
 

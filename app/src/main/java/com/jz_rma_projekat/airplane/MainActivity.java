@@ -30,16 +30,17 @@ import com.jz_rma_projekat.airplane.database.dao.AirportDao;
 import com.jz_rma_projekat.airplane.database.dao.FlightDao;
 import com.jz_rma_projekat.airplane.database.dto.AirlineDto;
 import com.jz_rma_projekat.airplane.database.dto.AirportDto;
-import com.jz_rma_projekat.airplane.database.dto.FlightDto;
 import com.jz_rma_projekat.airplane.database.dto.FlightWithAirportsDto;
 import com.jz_rma_projekat.airplane.database.entities.AirlineEntity;
 import com.jz_rma_projekat.airplane.database.entities.FlightEntity;
 import com.jz_rma_projekat.airplane.databinding.ActivityMainBinding;
 import com.jz_rma_projekat.airplane.database.entities.AirportEntity;
 import com.jz_rma_projekat.airplane.database.api_models.AirportsResponse;
+import com.jz_rma_projekat.airplane.network.AviationStackApi;
 import com.jz_rma_projekat.airplane.utils.mappers.AirlineMapper;
 import com.jz_rma_projekat.airplane.utils.mappers.AirportMapper;
 import com.jz_rma_projekat.airplane.utils.mappers.FlightMapper;
+import com.jz_rma_projekat.airplane.ui.viewmodel.FlightViewModel;
 
 //import androidx.core.app.ActivityCompat;
 import androidx.annotation.NonNull;
@@ -104,6 +105,7 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView rvFlights;
     private FlightsAdapter adapter;
+    private FlightViewModel flightViewModel;
 
     private AppDatabase db;
 
@@ -173,6 +175,34 @@ public class MainActivity extends AppCompatActivity {
                     .commit();
             // findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
         }
+
+        // Tesendic primer
+
+        //RecyclerView recyclerView = findViewById(R.id.recyclerview);
+        //final WordListAdapter adapter = new WordListAdapter(new WordListAdapter.WordDiff());
+        //recyclerView.setAdapter(adapter);
+        //recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        // Get a new or existing ViewModel from the ViewModelProvider.
+        //mWordViewModel = new ViewModelProvider(this).get(WordViewModel.class);
+
+        // Add an observer on the LiveData returned by getAlphabetizedWords.
+        // The onChanged() method fires when the observed data changes and the activity is
+        // in the foreground.
+        //mWordViewModel.getAllWords().observe(this, words -> {
+        //    // Update the cached copy of the words in the adapter.
+        //    adapter.submitList(words);
+        //});
+
+        //FloatingActionButton fab = findViewById(R.id.fab);
+        //fab.setOnClickListener(view -> {
+        //    Intent intent = new Intent(MainActivity.this, NewWordActivity.class);
+        //    startActivityForResult(intent, NEW_WORD_ACTIVITY_REQUEST_CODE);
+        //});
+
+        // Word word = new Word(data.getStringExtra(NewWordActivity.EXTRA_REPLY));
+        // mWordViewModel.insert(word);
+
         etCountry = findViewById(R.id.etCountry);
         etOrigin = findViewById(R.id.etOrigin);
         etDestination = findViewById(R.id.etDestination);

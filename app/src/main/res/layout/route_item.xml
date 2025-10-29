@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="@color/purple_200"
+    android:foreground="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Route Header: IATA codes -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/tvDepartureCode"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="JFK"
+                android:textStyle="bold"
+                android:textSize="20sp"
+                android:textColor="?android:attr/textColorPrimary"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="→"
+                android:textSize="20sp"
+                android:textColor="?android:attr/textColorPrimary"
+                android:layout_marginHorizontal="8dp"/>
+
+            <TextView
+                android:id="@+id/tvArrivalCode"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="LAX"
+                android:textStyle="bold"
+                android:textSize="20sp"
+                android:textColor="?android:attr/textColorPrimary"
+                android:gravity="end"/>
+        </LinearLayout>
+
+        <!-- Route Details (city or airport names) -->
+        <TextView
+            android:id="@+id/tvRouteInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="New York → Los Angeles"
+            android:textSize="14sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:layout_marginBottom="4dp"/>
+
+        <!-- Airline / Operator -->
+        <TextView
+            android:id="@+id/tvAirline"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Operated by: Delta Airlines"
+            android:textSize="14sp"
+            android:textColor="@color/purple_500"/>
+
+        <!-- Optional Country Info -->
+        <TextView
+            android:id="@+id/tvCountryInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="USA → USA"
+            android:textSize="13sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:layout_marginTop="4dp"/>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

@@ -1,5 +1,6 @@
 package com.jz_rma_projekat.airplane.database.dao;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -84,4 +85,16 @@ public interface AirportDao {
     // Find multiple airports by their IDs
     @Query("SELECT * FROM airports WHERE id IN (:airportIds)")
     List<AirportEntity> findAirportsByIds(List<Long> airportIds);
+
+    @Query("SELECT * FROM airports ORDER BY airportId ASC")
+    LiveData<List<AirportEntity>> getAllAirportsLive();
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insert(AirportEntity airport);
+
+    @Update
+    void update(AirportEntity airport);
+
+    @Query("DELETE FROM airports")
+    void deleteAll();
 }
