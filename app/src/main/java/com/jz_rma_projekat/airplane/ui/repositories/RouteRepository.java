@@ -7,6 +7,8 @@ import androidx.lifecycle.LiveData;
 import com.jz_rma_projekat.airplane.database.AppDatabase;
 import com.jz_rma_projekat.airplane.database.dao.RouteDao;
 import com.jz_rma_projekat.airplane.database.entities.RouteEntity;
+import com.jz_rma_projekat.airplane.network.AviationStackApi;
+import com.jz_rma_projekat.airplane.network.RetrofitClient;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -16,8 +18,10 @@ public class RouteRepository {
     private final RouteDao routeDao;
     private final LiveData<List<RouteEntity>> allRoutes;
     private final ExecutorService executorService;
+    private final AviationStackApi aviationStackApi;
 
     public RouteRepository(Application application) {
+        this.aviationStackApi = RetrofitClient.getApi();
         AppDatabase db = AppDatabase.getInstance(application);
         routeDao = db.routeDao();
         allRoutes = routeDao.getAllRoutesLive();

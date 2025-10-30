@@ -7,6 +7,8 @@ import androidx.lifecycle.LiveData;
 import com.jz_rma_projekat.airplane.database.AppDatabase;
 import com.jz_rma_projekat.airplane.database.dao.ScheduleDao;
 import com.jz_rma_projekat.airplane.database.entities.ScheduleEntity;
+import com.jz_rma_projekat.airplane.network.AviationStackApi;
+import com.jz_rma_projekat.airplane.network.RetrofitClient;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -17,8 +19,10 @@ public class ScheduleRepository {
     private final ScheduleDao scheduleDao;
     private final LiveData<List<ScheduleEntity>> allSchedules;
     private final ExecutorService executorService;
+    private final AviationStackApi aviationStackApi;
 
     public ScheduleRepository(Application application) {
+        this.aviationStackApi = RetrofitClient.getApi();
         AppDatabase db = AppDatabase.getInstance(application);
         scheduleDao = db.scheduleDao();
         allSchedules = scheduleDao.getAllSchedulesLive();
@@ -45,4 +49,3 @@ public class ScheduleRepository {
         executorService.execute(scheduleDao::deleteAll);
     }
 }
-

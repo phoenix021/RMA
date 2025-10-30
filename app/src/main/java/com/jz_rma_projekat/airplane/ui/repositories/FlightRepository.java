@@ -1,16 +1,21 @@
 package com.jz_rma_projekat.airplane.ui.repositories;
 
+import android.app.Application;
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.jz_rma_projekat.airplane.database.AppDatabase;
 import com.jz_rma_projekat.airplane.database.dao.FlightDao;
 import com.jz_rma_projekat.airplane.database.entities.FlightEntity;
 import com.jz_rma_projekat.airplane.database.api_models.FlightResponse;
 import com.jz_rma_projekat.airplane.network.AviationStackApi;
+import com.jz_rma_projekat.airplane.network.RetrofitClient;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -21,10 +26,13 @@ public class FlightRepository {
     private static final String TAG = "FlightRepository";
     private final AviationStackApi aviationStackApi;
     private final FlightDao flightDao;
+    private final ExecutorService executor;
 
-    public FlightRepository(AviationStackApi aviationStackApi, FlightDao flightDao) {
-        this.aviationStackApi = aviationStackApi;
-        this.flightDao = flightDao;
+    public FlightRepository(Application application) {
+        AppDatabase db = AppDatabase.getInstance(application);
+        this.aviationStackApi = RetrofitClient.getApi();
+        this.flightDao = db.flightDao();
+        executor = Executors.newSingleThreadExecutor();
     }
 
     // API call to get the flights

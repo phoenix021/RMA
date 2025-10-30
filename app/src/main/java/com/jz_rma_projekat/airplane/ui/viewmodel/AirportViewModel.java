@@ -19,7 +19,7 @@ public class AirportViewModel extends AndroidViewModel {
     public AirportViewModel(@NonNull Application application) {
         super(application);
         repository = new AirportRepository(application);
-        allAirports = repository.getAllAirports();
+        allAirports = repository.getAirports();
     }
 
     public LiveData<List<AirportEntity>> getAllAirports() {

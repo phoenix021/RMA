@@ -11,6 +11,9 @@ import androidx.recyclerview.widget.ListAdapter;
 import com.jz_rma_projekat.airplane.R;
 import com.jz_rma_projekat.airplane.database.entities.AirportEntity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class AirportListAdapter extends ListAdapter<AirportEntity, AirportViewHolder> {
 
     public AirportListAdapter() {
