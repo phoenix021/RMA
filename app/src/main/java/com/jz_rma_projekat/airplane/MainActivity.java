@@ -38,6 +38,7 @@ import com.jz_rma_projekat.airplane.database.entities.AirportEntity;
 import com.jz_rma_projekat.airplane.database.api_models.AirportsResponse;
 import com.jz_rma_projekat.airplane.network.AviationStackApi;
 import com.jz_rma_projekat.airplane.network.RetrofitClient;
+import com.jz_rma_projekat.airplane.ui.adapters.AirportListAdapter;
 import com.jz_rma_projekat.airplane.ui.viewmodel.AirportViewModel;
 import com.jz_rma_projekat.airplane.utils.mappers.AirlineMapper;
 import com.jz_rma_projekat.airplane.utils.mappers.AirportMapper;
@@ -100,11 +101,11 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 
 public class MainActivity extends AppCompatActivity {
-    private static final String BASE_URL = "https://api.aviationstack.com/v1/";
-    private static final String API_KEY = "07d66aaa5c32f0546552c090cd95403f"; // Replace with your key
-    private static final String DEBUG_TAG = "MainActivity";
+     private static final String DEBUG_TAG = "MainActivity";
 
     private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 1002;
+
+    AirportViewModel airportViewModel;
 
     private RecyclerView rvFlights;
     private FlightsAdapter adapter;
@@ -132,6 +133,8 @@ public class MainActivity extends AppCompatActivity {
     private LocationCallback mLocationCallback;
     private LocationRequest mLocationRequest;
     private boolean mRequestingLocationUpdates = false;
+
+    private AirportListAdapter airplaneAdapter;
 
 
     @Override
@@ -222,28 +225,28 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        airplaneAdapter = new AirportListAdapter();
+        // Initialize ViewModel
+        airportViewModel = new ViewModelProvider(this).get(AirportViewModel.class);
+
+        // Observe the LiveData for airport data
+        airportViewModel.getAllAirports().observe(this, airports -> {
+            if (airports != null) {
+                // Update the RecyclerView with the airport list
+                airplaneAdapter.submitList(airports);
+
+                populateAirportsDropdown(airports);
+            }
+        });
+
 
         db = AppDatabase.getInstance(getApplicationContext());
         new Thread(() -> {
-            AirportDao airportDao = db.airportDao();
+
             AirlineDao airlineDao = db.airlineDao();
 
-            int count = airportDao.getCount(); // number of records
-            boolean exists = airportDao.hasAny(); // true if at least one row exists
-
-            Log.d("MainActivity", "Number of airports: " + count);
-            Log.d("MainActivity", "Are there any airports? " + exists);
-            // Call AviationStack API and show list
-            List<AirportDto> airports = new ArrayList<AirportDto>(0);
-            if (!exists) {
-                fetchAndSaveAllAirports();
-            } else {
-                count = airportDao.getCount();
-                Log.d("MainActivity", "Number of airports: " + count);
-                List<AirportEntity> airportEntities = airportDao.getAllAirports();
-                List<AirportDto> dtos =  AirportMapper.toDtoList(airportEntities);
-                runOnUiThread(() -> populateAirportDropdowns(dtos));
-            }
+             int count = 0;
+             boolean exists = false;
 
             count = airlineDao.getCount(); // number of records
             exists = airlineDao.hasAny(); // true if at least one row exists
@@ -259,7 +262,6 @@ public class MainActivity extends AppCompatActivity {
         }).start();
 
         //getAirportsFromDatabase();
-
 
         //mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -286,6 +288,49 @@ public class MainActivity extends AppCompatActivity {
     //Google Play Location API pruža i druge servise kao sto su:
     //        ◦ Dobijanje adrese na osnovu lokacije – geocoding,
     //        ◦ Definisanje oblasti u odnosu na neku lokaciju - geofences, .
+
+    private void populateAirportsDropdown(List<AirportEntity> airports){
+        List<String> airportNames = new ArrayList<>(0);
+        Set<String> uniqueCountries = new HashSet<>();
+        for(AirportEntity airport :airports)
+        {
+            if (airport.getName() != null && airport.getIataCode() != null) {
+                String formatted = airport.getName() + " (" + airport.getIataCode() + ") Country:" + airport.getCountry();
+                // Log.e("MainActivity", "Populating airport: " + formatted);
+
+                airportNames.add(formatted);
+            }
+
+            if (airport.getCountry() != null && !airport.getCountry().isEmpty()) {
+                uniqueCountries.add(airport.getCountry());
+            }
+        }
+
+        List<String> airportCountries = new ArrayList<>(uniqueCountries);
+        Collections.sort(airportCountries);
+
+        ArrayAdapter<String> countryAdapter = new ArrayAdapter<>(
+                MainActivity.this,
+                android.R.layout.simple_dropdown_item_1line,
+                airportCountries
+        );
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                MainActivity.this,
+                android.R.layout.simple_dropdown_item_1line,
+                airportNames
+        );
+
+        etCountry = findViewById(R.id.etCountry);
+        etOrigin = findViewById(R.id.etOrigin);
+        etDestination = findViewById(R.id.etDestination);
+        //etAirplanes = findViewById(R.id.airplanes);
+
+        etOrigin.setAdapter(adapter);
+        etDestination.setAdapter(adapter);
+        etCountry.setAdapter(countryAdapter);
+        //etAirplanes.setAdapter(airplanesAdapter);
+    }
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -532,32 +577,6 @@ void populateAirportDropdowns(List<AirportDto> airports){
     }
 
 
-    public void fetchAllFlights(){
-        AviationStackApi api = RetrofitClient.getApi();
-        Call<FlightResponse> call = api.getFlights(API_KEY);
-        FlightDao flightDao = db.flightDao();
-
-        call.enqueue(new Callback<FlightResponse>() {
-            @Override
-            public void onResponse(Call<FlightResponse> call, Response<FlightResponse> response) {
-                if (response.isSuccessful()) {
-                    List<FlightWithAirportsDto> flights = response.body().getData();
-                    // Insert or update the flights into Room database
-                    for (FlightWithAirportsDto flight : flights) {
-                        FlightEntity entity = FlightMapper.flightWithAirportsDtoToEntity(flight);
-                        flightDao.insert(entity); // Insert into Room DB
-                    }
-                }
-            }
-
-            @Override
-            public void onFailure(Call<FlightResponse> call, Throwable t) {
-                // Handle failure
-            }
-        });
-
-    }
-
     public void getAirportsFromDatabase() {
         new Thread(() -> {
             List<AirportEntity> airportEntities = db.airportDao().getAllAirports();
@@ -624,108 +643,6 @@ void populateAirportDropdowns(List<AirportDto> airports){
         return (networkInfo != null && networkInfo.isConnected());
     }
 
-    private ArrayList<AirportDto> fetchAirports() {
-        Log.d("Airport API", "Starting fetchFlights()");
-
-        AviationStackApi api =RetrofitClient.getApi();
-
-        Log.e("Airport API", "Making API call to getAirports");
-        Call<AirportsResponse> call = api.getAirports(API_KEY);
-
-
-        call.enqueue(new Callback<AirportsResponse>() {
-            @Override
-            public void onResponse(Call<AirportsResponse> call, Response<AirportsResponse> response) {
-                Log.e("Airport API", "onResponse() triggered");
-
-                if (response.isSuccessful() && response.body() != null) {
-                    Log.d("Airport API", "API call successful");
-
-                    List<AirportDto> airports = response.body().getData();
-                    Log.d("Airport API", "Fetched " + (airports != null ? airports.size() : 0) + " airports");
-
-                    //saveAirportsToDatabase(airports);
-
-
-                    runOnUiThread(() -> {
-                        populateAirportDropdowns(airports); // safely update AutoCompleteTextView
-                    });
-
-                } else {
-                    Log.e("Airport API", "Response unsuccessful. Code: " + response.code());
-
-                    if (response.errorBody() != null) {
-                        try {
-                            String error = response.errorBody().string();
-                            Log.e("Airport API", "Error body: " + error);
-                        } catch (IOException e) {
-                            Log.e("Airport API", "Failed to read error body", e);
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void onFailure(Call<AirportsResponse> call, Throwable t) {
-                Log.e("Airport API", "API call failed", t);
-            }
-
-        });
-        return null;
-    }
-
-    private void fetchAndSaveAllAirports() {
-        initCsvFile();
-        AviationStackApi api = RetrofitClient.getApi();
-        Log.d("Airport API", "Starting airport fetch from offset 0");
-        fetchAirportsPage(api, 0); // start from offset 0
-    }
-
-    // Recursive async function to fetch pages
-    private void fetchAirportsPage(AviationStackApi api, int offset) {
-        Call<AirportsResponse> call = api.getAirports(API_KEY, 100, offset);
-
-        call.enqueue(new Callback<AirportsResponse>() {
-            @Override
-            public void onResponse(Call<AirportsResponse> call, Response<AirportsResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    AirportsResponse data = response.body();
-                    List<AirportDto> airports = data.getData();
-                    int total = data.getPagination().getTotal();
-
-                    if (airports != null && !airports.isEmpty()) {
-                        saveAirportsToDatabase(airports);
-                        Log.d("Airport API", "Saved " + airports.size() +
-                                " airports (offset=" + offset + ")");
-                        appendAirportsToCsv(airports);
-                    }
-
-                    // Continue fetching the next page
-                    int nextOffset = offset + 100;
-                    if (nextOffset < total) {
-                        fetchAirportsPage(api, nextOffset); // recursive async call
-                    } else {
-                        Log.d("Airport API", "✅ All airports fetched!");
-                        // Once done, update your dropdowns safely on UI thread
-                        AirportDao dao = db.airportDao();
-                        List<AirportEntity> entities = dao.getAllAirports();
-                        List<AirportDto> allAirports = AirportMapper.toDtoList(entities);
-                        runOnUiThread(() -> {
-                            populateAirportDropdowns(allAirports);
-                        });
-                    }
-
-                } else {
-                    Log.e("Airport API", "❌ Response unsuccessful. Code: " + response.code());
-                }
-            }
-
-            @Override
-            public void onFailure(Call<AirportsResponse> call, Throwable t) {
-                Log.e("Airport API", "💥 API call failed", t);
-            }
-        });
-    }
 
     private File csvFile;
 
@@ -856,8 +773,9 @@ void populateAirportDropdowns(List<AirportDto> airports){
     }
 
     // Recursive async function to fetch pages
+    // TODO: create viewModel etc
     private void fetchAirlinesPage(AviationStackApi api, int offset) {
-        Call<AirlineResponse> call = api.getAirlines(API_KEY, 100, offset);
+        Call<AirlineResponse> call = api.getAirlines("07d66aaa5c32f0546552c090cd95403f", 100, offset);
 
         call.enqueue(new Callback<AirlineResponse>() {
             @Override
@@ -1051,60 +969,6 @@ void populateAirportDropdowns(List<AirportDto> airports){
         copyCsvToDownloads(airlinesCsv, "airlines.csv");
     }
 
-    public void doAviationAPIfunctions(){
-        rvFlights = findViewById(R.id.rvFlights);
-        rvFlights.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new FlightsAdapter(new ArrayList<>());
-        rvFlights.setAdapter(adapter);
-
-        // Set up Retrofit
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-
-        AviationStackApi api = retrofit.create(AviationStackApi.class);
-
-        Date now = new Date();
-        SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-DD", Locale.getDefault());
-        String dateString = sdf.format(now);
-        Call<FlightResponse> call = api.getFlightsByDate(API_KEY, dateString);
-
-        call.enqueue(new Callback<FlightResponse>() {
-            @Override
-            public void onResponse(Call<FlightResponse> call, Response<FlightResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    List<FlightWithAirportsDto> flights = response.body().getData();
-                    for (FlightWithAirportsDto flight : flights) {
-                        Log.d("Flight", "Flight: " + flight.toString() + " from " + flight.getDepartureAirportName() + " to " + flight.getArrivalAirportName());
-                    }
-                    adapter.updateFlights(flights);
-                } else {
-                    Log.e("API Error", "Response failed or empty");
-                    Log.e("API Error", "HTTP Code: " + response.code());
-
-                    if (response.errorBody() != null) {
-                        try {
-                            String errorBodyStr = response.errorBody().string();
-                            Log.e("API Error", "Error Body: " + errorBodyStr);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Log.e("API Error", "Error body is null");
-                    }
-                }
-            }
-
-
-            @Override
-            public void onFailure(Call<FlightResponse> call, Throwable t) {
-                Log.e("API Error", "JELENA: " + call.toString());
-                t.printStackTrace();
-            }
-        });
-
-    }
     public void sendIntentToGoogleMaps(){
         double latitude = 37.7749;
         double longitude = -122.4194;
