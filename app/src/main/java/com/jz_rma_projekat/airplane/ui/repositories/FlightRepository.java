@@ -128,47 +128,61 @@ public class FlightRepository {
 
         return flightsLiveData;
     }
-
     public LiveData<List<FlightEntity>> getAllFlights() {
         MutableLiveData<List<FlightEntity>> allFlightsLiveData = new MutableLiveData<>();
 
-        // Make API call
-        aviationStackApi.getFlightsByRoute(
-                RetrofitClient.API_KEY,
-                100,
-                0
-        ).enqueue( new Callback<ApiResponse<FlightsDto>>() {
+        executor.execute(() -> {
+            List<FlightEntity> cachedFlights = flightDao.getAllFlightsSync(); // synchronous DB fetch
 
-            @Override
-            public void onResponse(Call<ApiResponse<FlightsDto>> call, Response<ApiResponse<FlightsDto>> response) {
+            if (cachedFlights != null && !cachedFlights.isEmpty()) {
+                // ✅ Use cached data
+                Log.d(TAG, "Loaded flights from local DB (" + cachedFlights.size() + ")");
+                allFlightsLiveData.postValue(cachedFlights);
+            } else {
+                // Only call API if DB is empty
+                Log.d(TAG, "No flights in DB, fetching from API...");
 
-                if (response.isSuccessful() && response.body() != null) {
-                    List<FlightEntity> flights = new ArrayList<>();
-                    List<FlightsDto> flightDtos = response.body().getData();
-                    for (FlightsDto flightDto : flightDtos) {
-                        flights.add(FlightMapper.fullFlightsDtoToEntity(flightDto));
-                    }
-                    executor.execute(() -> {
-                        for (FlightEntity flight : flights) {
-                            Log.e("JELENA", "Added flight " + flight.getDepartureAirportId() +"->" + flight.getArrivalAirportId() + " flight to db");
-                            Log.e("JELENA", "Added flight " + flight.getFlightNumber() +"->" + flight.getArrivalTime() + " flight to db");
-                            flightDao.insert(flight);
+                aviationStackApi.getFlightsByRoute(
+                        RetrofitClient.API_KEY,
+                        100,   // limit
+                        0      // offset
+                ).enqueue(new Callback<ApiResponse<FlightsDto>>() {
+                    @Override
+                    public void onResponse(Call<ApiResponse<FlightsDto>> call, Response<ApiResponse<FlightsDto>> response) {
+                        if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
+                            List<FlightsDto> dtoList = response.body().getData();
+                            if (dtoList.isEmpty()) {
+                                Log.w(TAG, "API returned empty flight list");
+                                allFlightsLiveData.postValue(Collections.emptyList());
+                                return;
+                            }
+
+                            List<FlightEntity> flights = new ArrayList<>();
+                            for (FlightsDto flightDto : dtoList) {
+                                flights.add(FlightMapper.fullFlightsDtoToEntity(flightDto));
+                            }
+
+                            executor.execute(() -> {
+                                flightDao.insertAll(flights);
+                                Log.d(TAG, "Saved " + flights.size() + " flights to local DB");
+                                allFlightsLiveData.postValue(flights);
+                            });
+                        } else {
+                            Log.e(TAG, "API Response error: " + response.message());
                         }
-                        allFlightsLiveData.postValue(flights);
-                    });
-                } else {
-                    Log.e(TAG, "JELENA API Response error: " + response.message());
-                }
-            }
+                    }
 
-            @Override
-            public void onFailure(Call<ApiResponse<FlightsDto>> call, Throwable t) {
-                t.printStackTrace();
-                Log.e(TAG, "JELENA API Response error: " + t.toString());
+                    @Override
+                    public void onFailure(Call<ApiResponse<FlightsDto>> call, Throwable t) {
+                        Log.e(TAG, "API call failed: " + t.getMessage());
+                        allFlightsLiveData.postValue(Collections.emptyList());
+                    }
+                });
             }
         });
 
         return allFlightsLiveData;
     }
+
 }
 

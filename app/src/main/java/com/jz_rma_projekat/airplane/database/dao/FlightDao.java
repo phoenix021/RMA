@@ -60,7 +60,7 @@ public interface FlightDao {
 
     // ✅ Get all flights synchronously (non-LiveData)
     @Query("SELECT * FROM flights ORDER BY departureTime ASC")
-    LiveData<List<FlightEntity>> getAllFlightsSync();
+    List<FlightEntity> getAllFlightsSync();
 
     // ✅ Find flights by flight number
     @Query("SELECT * FROM flights WHERE flightNumber = :flightNumber LIMIT 1")
