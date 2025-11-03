@@ -16,6 +16,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
+import com.jz_rma_projekat.airplane.utils.Utils;
+
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -94,6 +96,7 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity {
      private static final String DEBUG_TAG = "MainActivity";
 
+    private static final int REQUEST_WRITE_STORAGE_PERMISSION = 1;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
     private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 1002;
 
@@ -139,7 +142,6 @@ public class MainActivity extends AppCompatActivity {
     AirportEntity searchDestination;
     Date searchDate;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -148,6 +150,16 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         createNotificationChannel();
+
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED) {
+
+        } else {
+            // Request permission if not granted
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_WRITE_STORAGE_PERMISSION);
+        }
 
         //setSupportActionBar(binding.toolbar);
 
@@ -165,13 +177,13 @@ public class MainActivity extends AppCompatActivity {
         });
 
         shareAirlinesBtn = findViewById(R.id.btnShareAirlines);
-        shareAirlinesBtn.setOnClickListener(v -> shareAirlinesCsv());
+        shareAirlinesBtn.setOnClickListener(v -> Utils.shareAirlinesCsv(getApplication()));
 
         downloadBtn = findViewById(R.id.btnDownloadAirlines);
-        downloadBtn.setOnClickListener(v -> saveAirlinesCsvToDownloads());
+        downloadBtn.setOnClickListener(v -> Utils.saveAirlinesCsvToDownloads(getApplication()));
 
         downloadAllBtn = findViewById(R.id.btnDownloadAll);
-        downloadAllBtn.setOnClickListener(v -> downloadAllCsvs());
+        downloadAllBtn.setOnClickListener(v -> Utils.downloadAllCsvs(getApplication()));
 
         //airplanesJsonBtn = findViewById(R.id.btnAirplanesJson);
         //airplanesJsonBtn.setOnClickListener(v -> downloadAllCsvs());
@@ -577,286 +589,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private static final int REQUEST_WRITE_STORAGE_PERMISSION = 1;
-    private void saveAirlinesJsonToExternalStorage(String jsonResponse) {
-        // Check if the permission is granted
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                == PackageManager.PERMISSION_GRANTED) {
-            // Permission granted, proceed with saving the file
-            writeJsonToFile(jsonResponse);
-        } else {
-            // Permission not granted, request it
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    REQUEST_WRITE_STORAGE_PERMISSION);
-        }
-    }
-
-    private void writeJsonToFile(String jsonResponse) {
-        File directory = new File(Environment.getExternalStorageDirectory(), "AviationApp");
-        if (!directory.exists()) {
-            directory.mkdirs();  // Create the directory if it doesn't exist
-        }
-
-        File file = new File(directory, "airline.json");
-
-        try {
-            FileOutputStream fos = new FileOutputStream(file);
-            fos.write(jsonResponse.getBytes());
-            fos.close();
-            Log.d("Airline API", "JSON saved to external storage: " + file.getAbsolutePath());
-        } catch (IOException e) {
-            Log.e("Airline API", "Error saving JSON to external storage", e);
-        }
-    }
-
-    private void appendJsonToExternalStorage(String jsonResponse) {
-        // Check if the permission is granted
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                == PackageManager.PERMISSION_GRANTED) {
-
-            File directory = new File(Environment.getExternalStorageDirectory(), "AviationApp");
-            if (!directory.exists()) {
-                directory.mkdirs();  // Create the directory if it doesn't exist
-            }
-
-            File file = new File(directory, "airline.json");
-
-            try {
-                // Open the file in append mode
-                FileOutputStream fos = new FileOutputStream(file, true);  // 'true' means append
-                fos.write(jsonResponse.getBytes());
-                fos.write("\n".getBytes());  // Add a newline after each page's JSON data
-                fos.close();
-                Log.d("Airline API", "JSON appended to external storage: " + file.getAbsolutePath());
-            } catch (IOException e) {
-                Log.e("Airline API", "Error appending JSON to external storage", e);
-            }
-        } else {
-            // Request permission if not granted
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    1);
-        }
-    }
-
-    private void closeJsonArray() {
-        File directory = new File(Environment.getExternalStorageDirectory(), "AviationApp");
-        File file = new File(directory, "airline.json");
-
-        try {
-            FileOutputStream fos = new FileOutputStream(file, true);
-            fos.write("\n]".getBytes());  // Close the array
-            fos.close();
-            Log.d("Airline API", "JSON array closed.");
-        } catch (IOException e) {
-            Log.e("Airline API", "Error closing JSON array", e);
-        }
-    }
-
-    private void fetchAndSaveAllAirlines() {
-        AviationStackApi api = RetrofitClient.getApi();
-        Log.d("Airline API", "Starting airline fetch from offset 0");
-        fetchAirlinesPage(api, 0); // start from offset 0
-    }
-
-    // Recursive async function to fetch pages
-    // TODO: create viewModel etc
-    private void fetchAirlinesPage(AviationStackApi api, int offset) {
-        Call<AirlineResponse> call = api.getAirlines("07d66aaa5c32f0546552c090cd95403f", 100, offset);
-
-        call.enqueue(new Callback<AirlineResponse>() {
-            @Override
-            public void onResponse(Call<AirlineResponse> call, Response<AirlineResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    AirlineResponse data = response.body();
-                    List<AirlineDto> airlines = data.getData();
-                    int total = data.getPagination().getTotal();
-
-                    if (airlines != null && !airlines.isEmpty()) {
-                        saveAirlinesToDatabase(airlines);  // Save to Room Database
-                        Log.d("Airline API", "Saved " + airlines.size() +
-                                " airlines (offset=" + offset + ")");
-                        appendAirlinesToCsv(airlines);
-                        appendJsonToExternalStorage(response.body().toString());
-                    }
-
-                    // Continue fetching the next page
-                    //int nextOffset = offset + 100;
-                    int nextOffset = offset + 1000; // just fot development purposes because of the api limits are invalved, return to 100 for prod
-                    if (nextOffset < total) {
-                        fetchAirlinesPage(api, nextOffset); // recursive async call
-                    } else {
-                        Log.d("Airline API", "✅ All airlines fetched!");
-                        closeJsonArray();
-                        //AirlineDao dao = db.airlineDao();
-                        //List<AirlineEntity> entities = dao.getAllAirlines();
-                        //List<AirlineDto> allAirlines = AirlineMapper.toDtoList(entities);
-                        runOnUiThread(() -> {
-                             // TODO: make some notification or something
-                        });
-                    }
-
-                } else {
-                    Log.e("Airline API", "❌ Response unsuccessful. Code: " + response.code());
-                }
-            }
-
-            @Override
-            public void onFailure(Call<AirlineResponse> call, Throwable t) {
-                Log.e("Airline API", "❌ Request failed: " + t.getMessage());
-                // TODO: make some tost or something
-            }
-        });
-    }
-
-    private void saveAirlinesToDatabase(List<AirlineDto> airlineDtos) {
-        // Convert List<AirlineDto> to List<AirlineEntity> using the AirlineMapper
-        List<AirlineEntity> airlineEntities = AirlineMapper.toEntityList(airlineDtos);
-
-        // Insert into the database asynchronously
-        new Thread(() -> {
-            AirlineDao dao = db.airlineDao();
-            dao.insertAirlines(airlineEntities);
-        }).start();
-    }
-
-    private void appendAirlinesToCsv(List<AirlineDto> airlines) {
-        File csvFile = new File(getExternalFilesDir(null), "airlines.csv");
-
-        try (FileWriter fw = new FileWriter(csvFile, true);
-             BufferedWriter bw = new BufferedWriter(fw)) {
-
-            for (AirlineDto a : airlines) {
-                String line = String.join(",",
-                        a.getAirlineId(),
-                        a.getAirlineName(),
-                        a.getIataCode(),
-                        a.getIcaoCode(),
-                        a.getCallsign(),
-                        a.getHubCode(),
-                        a.getCountryIso2(),
-                        a.getCountryName(),
-                        a.getDateFounded(),
-                        a.getFleetSize(),
-                        a.getFleetAverageAge(),
-                        a.getStatus(),
-                        a.getType(),
-                        a.getIataPrefixAccounting()
-                );
-                bw.write(line);
-                bw.newLine();
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void shareAirlinesCsv() {
-        File csvFile = new File(getExternalFilesDir(null), "airlines.csv");
-
-        if (!csvFile.exists()) {
-            Toast.makeText(this, "CSV file not found!", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        Uri fileUri = FileProvider.getUriForFile(
-                this,
-                getPackageName() + ".provider",
-                csvFile
-        );
-
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("text/csv");
-        intent.putExtra(Intent.EXTRA_STREAM, fileUri);
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-        startActivity(Intent.createChooser(intent, "Download or share CSV"));
-    }
-
-    private void saveAirlinesCsvToDownloads() {
-        File csvFile = new File(getExternalFilesDir(null), "airlines.csv");
-
-        if (!csvFile.exists()) {
-            Toast.makeText(this, "CSV file not found!", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        String fileName = "airlines.csv";
-
-        ContentValues values = new ContentValues();
-        values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
-        values.put(MediaStore.Downloads.MIME_TYPE, "text/csv");
-        values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
-
-        ContentResolver resolver = getContentResolver();
-        Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
-
-        if (uri != null) {
-            try (OutputStream out = resolver.openOutputStream(uri);
-                 FileInputStream in = new FileInputStream(csvFile)) {
-
-                byte[] buffer = new byte[1024];
-                int length;
-                while ((length = in.read(buffer)) > 0) {
-                    out.write(buffer, 0, length);
-                }
-
-                Toast.makeText(this, "CSV saved to Downloads", Toast.LENGTH_SHORT).show();
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                Toast.makeText(this, "Failed to save CSV: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        } else {
-            Toast.makeText(this, "Failed to create file in Downloads", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void copyCsvToDownloads(File csvFile, String fileName) {
-        if (!csvFile.exists()) {
-            Toast.makeText(this, fileName + " not found!", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        ContentValues values = new ContentValues();
-        values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
-        values.put(MediaStore.Downloads.MIME_TYPE, "text/csv");
-        values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
-
-        ContentResolver resolver = getContentResolver();
-        Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
-
-        if (uri != null) {
-            try (OutputStream out = resolver.openOutputStream(uri);
-                 FileInputStream in = new FileInputStream(csvFile)) {
-
-                byte[] buffer = new byte[1024];
-                int length;
-                while ((length = in.read(buffer)) > 0) {
-                    out.write(buffer, 0, length);
-                }
-
-                Toast.makeText(this, fileName + " saved to Downloads", Toast.LENGTH_SHORT).show();
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                Toast.makeText(this, "Failed to save " + fileName + ": " + e.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        } else {
-            Toast.makeText(this, "Failed to create " + fileName + " in Downloads", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void downloadAllCsvs() {
-        File airportsCsv = new File(getExternalFilesDir(null), "airports.csv");
-        File airlinesCsv = new File(getExternalFilesDir(null), "airlines.csv");
-
-        copyCsvToDownloads(airportsCsv, "airports.csv");
-        copyCsvToDownloads(airlinesCsv, "airlines.csv");
-    }
-
     public void sendIntentToGoogleMaps(){
         double latitude = 37.7749;
         double longitude = -122.4194;
@@ -873,7 +605,6 @@ public class MainActivity extends AppCompatActivity {
             Log.e("MainActivity", "Can not resolve activity google maps");
         }
     }
-
     @Override
     public boolean onSupportNavigateUp() {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
