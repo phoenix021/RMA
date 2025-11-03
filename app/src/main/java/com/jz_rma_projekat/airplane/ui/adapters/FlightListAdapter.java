@@ -13,6 +13,18 @@ import com.jz_rma_projekat.airplane.database.entities.FlightEntity;
 
 public class FlightListAdapter extends ListAdapter<FlightEntity, FlightViewHolder> {
 
+    private OnFlightClickListener listener;
+
+    // Interface for click events
+    public interface OnFlightClickListener {
+        void onFlightClick(FlightEntity flight);
+    }
+
+    // Set listener
+    public void setOnFlightClickListener(OnFlightClickListener listener) {
+        this.listener = listener;
+    }
+
     public FlightListAdapter() {
         super(DIFF_CALLBACK);
     }
@@ -29,6 +41,11 @@ public class FlightListAdapter extends ListAdapter<FlightEntity, FlightViewHolde
     public void onBindViewHolder(@NonNull FlightViewHolder holder, int position) {
         FlightEntity current = getItem(position);
         holder.bind(current);
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onFlightClick(current);
+            }
+        });
     }
 
     public static final DiffUtil.ItemCallback<FlightEntity> DIFF_CALLBACK =

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scrollView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Flight General Info -->
+        <TextView
+            android:id="@+id/tvFlightNumber"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Flight Number"
+            android:textStyle="bold"
+            android:textSize="20sp"
+            android:paddingBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvFlightDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Flight Date"
+            android:paddingBottom="16dp" />
+
+        <!-- Route Info -->
+        <TextView
+            android:id="@+id/tvRoute"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Origin ➜ Destination"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:paddingBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Status"
+            android:paddingBottom="16dp" />
+
+        <!-- Departure Info -->
+        <TextView
+            android:text="Departure Info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:paddingBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tvDepartureTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Departure Time"
+            android:paddingBottom="2dp" />
+
+        <TextView
+            android:id="@+id/tvDepartureAirport"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Airport / IATA / ICAO"
+            android:paddingBottom="2dp" />
+
+        <TextView
+            android:id="@+id/tvDepartureGate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Gate / Terminal"
+            android:paddingBottom="16dp" />
+
+        <!-- Arrival Info -->
+        <TextView
+            android:text="Arrival Info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:paddingBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tvArrivalTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Arrival Time"
+            android:paddingBottom="2dp" />
+
+        <TextView
+            android:id="@+id/tvArrivalAirport"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Airport / IATA / ICAO"
+            android:paddingBottom="2dp" />
+
+        <TextView
+            android:id="@+id/tvArrivalGate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Gate / Terminal"
+            android:paddingBottom="16dp" />
+
+        <!-- Airline Info -->
+        <TextView
+            android:text="Airline Info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:paddingBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tvAirline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Airline Name / IATA / ICAO"
+            android:paddingBottom="2dp" />
+
+    </LinearLayout>
+</ScrollView>

@@ -184,5 +184,9 @@ public class FlightRepository {
         return allFlightsLiveData;
     }
 
+    public LiveData<FlightEntity> getFlightById(long id) {
+        return flightDao.getFlightById(id);
+    }
+
 }
 

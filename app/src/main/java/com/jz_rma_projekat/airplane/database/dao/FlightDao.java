@@ -85,4 +85,6 @@ public interface FlightDao {
     @Query("SELECT * FROM flights WHERE departureAirportId = :origin AND arrivalAirportId = :destination AND date(departureTime) = :date")
     LiveData<List<FlightEntity>> searchFlights(String origin, String destination, String date);
 
+    @Query("SELECT * FROM flights WHERE id = :id LIMIT 1")
+    LiveData<FlightEntity> getFlightById(long id);
 }

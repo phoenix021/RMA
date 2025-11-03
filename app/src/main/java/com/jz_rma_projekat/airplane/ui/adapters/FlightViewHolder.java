@@ -12,21 +12,26 @@ import com.jz_rma_projekat.airplane.database.entities.ScheduleEntity;
 
 public class FlightViewHolder extends RecyclerView.ViewHolder {
 
-    public final TextView tvRoute;
-    //public final TextView tvTime;
-    public final TextView tvAirline;
+    private TextView tvFlightNumber;
+    private TextView tvDeparture;
+    private TextView tvArrival;
+    private TextView tvStatus;
 
     public FlightViewHolder(@NonNull View itemView) {
         super(itemView);
-        tvRoute = itemView.findViewById(R.id.tvScheduleRoute);
-        //tvTime = itemView.findViewById(R.id.tvScheduleTime);
-        tvAirline = itemView.findViewById(R.id.tvAirline);
+        tvFlightNumber = itemView.findViewById(R.id.tvFlightNumber);
+        tvDeparture = itemView.findViewById(R.id.tvDeparture);
+        tvArrival = itemView.findViewById(R.id.tvArrival);
+        tvStatus = itemView.findViewById(R.id.tvStatus);
     }
 
     public void bind(FlightEntity flight) {
-        tvRoute.setText(flight.getDepartureAirportId() + " → " + flight.getArrivalAirportId());
-        //tvTime.setText(flight.getDepartureTime() + " - " + flight.getArrivalTime());
-        tvAirline.setText("Flight doesnt have a field airline");
+        if (flight != null) {
+            tvFlightNumber.setText(flight.getFlightNumber());
+            tvDeparture.setText(flight.getDepartureAirportId());
+            tvArrival.setText(flight.getArrivalAirportId());
+            tvStatus.setText(flight.getStatus() != null ? flight.getStatus() : "Unknown");
+        }
     }
 }
 

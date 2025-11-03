@@ -1,6 +1,33 @@
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/textViewFlight"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="12dp"
-    android:textSize="16sp" />
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tvFlightNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Flight Number"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvDeparture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Departure Airport" />
+
+    <TextView
+        android:id="@+id/tvArrival"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Arrival Airport" />
+
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Status" />
+
+</LinearLayout>

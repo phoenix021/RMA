@@ -20,7 +20,7 @@ public class FlightViewModel extends AndroidViewModel {
 
     private final FlightRepository flightRepository;
 
-    private final LiveData<List<FlightEntity>> allFlights = null;
+    private LiveData<List<FlightEntity>> allFlights;
 
     private final MutableLiveData<FlightResponse> flightsLiveData = new MutableLiveData<>();
     private final MutableLiveData<List<FlightEntity>> allFlightsFromDbLiveData = new MutableLiveData<>();
@@ -62,6 +62,10 @@ public class FlightViewModel extends AndroidViewModel {
 
     public LiveData<List<FlightEntity>> getAllFlights() {
         return flightRepository.getAllFlights();
+    }
+
+    public LiveData<FlightEntity> getFlightById(long id) {
+        return flightRepository.getFlightById(id);
     }
 }
 

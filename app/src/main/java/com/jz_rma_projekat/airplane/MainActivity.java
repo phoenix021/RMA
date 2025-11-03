@@ -256,6 +256,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        Button btnViewFlights = findViewById(R.id.btnViewFlights);
+        btnViewFlights.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, FlightsActivity.class);
+            startActivity(intent);
+        });
 
         etAirplanes = findViewById(R.id.airplanes);
         airplanesAdapter = new ArrayAdapter<>(
@@ -504,19 +509,6 @@ public class MainActivity extends AppCompatActivity {
     private void stopLocationUpdates() {
         mFusedLocationClient.removeLocationUpdates(mLocationCallback);
     }
-
-
-    //private void saveToDatabase(List<AirportEntity> airports) {
-    //    AppDatabase db = Room.databaseBuilder(
-    //            getApplicationContext(),
-    //            AppDatabase.class,
-    //            "app_database"
-    //    ).build();
-
-    //    Executors.newSingleThreadExecutor().execute(() -> {
-    //        db.airportDao().insertAll(airports);
-    //    });
-    //}
 
     //provera konektcije
     //sa sajlajdova
