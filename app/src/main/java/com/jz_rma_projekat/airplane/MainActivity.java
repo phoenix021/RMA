@@ -34,6 +34,7 @@ import com.jz_rma_projekat.airplane.network.AviationStackApi;
 import com.jz_rma_projekat.airplane.network.RetrofitClient;
 import com.jz_rma_projekat.airplane.ui.adapters.AirportAutoCompleteAdapter;
 import com.jz_rma_projekat.airplane.ui.adapters.AirportListAdapter;
+import com.jz_rma_projekat.airplane.ui.adapters.FlightListAdapter;
 import com.jz_rma_projekat.airplane.ui.viewmodel.AirportViewModel;
 import com.jz_rma_projekat.airplane.utils.mappers.AirlineMapper;
 import com.jz_rma_projekat.airplane.ui.viewmodel.FlightViewModel;
@@ -80,6 +81,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -125,6 +127,12 @@ public class MainActivity extends AppCompatActivity {
     private boolean mRequestingLocationUpdates = false;
 
     private AirportListAdapter airportAdapter;
+
+    private FlightListAdapter flightAdapter;
+
+    AirportEntity searchOrigin;
+    AirportEntity searchDestination;
+    Date searchDate;
 
 
     @Override
@@ -183,6 +191,7 @@ public class MainActivity extends AppCompatActivity {
             Calendar calendar = Calendar.getInstance();
             DatePickerDialog dialog = new DatePickerDialog(MainActivity.this,
                     (view, year, month, dayOfMonth) -> {
+                        searchDate = new Date(year, month, dayOfMonth);
                         String selectedDate = String.format(Locale.getDefault(), "%04d-%02d-%02d", year, month + 1, dayOfMonth);
                         etDate.setText(selectedDate);
                         showFlightNotification("Selection date: ", selectedDate);
@@ -194,23 +203,21 @@ public class MainActivity extends AppCompatActivity {
             dialog.show();
         });
 
-        // Search button logic
-        btnSearchFlights.setOnClickListener(v -> {
-            String origin = etOrigin.getText().toString().trim();
-            String destination = etDestination.getText().toString().trim();
-            String date = etDate.getText().toString().trim();
 
-            if (origin.isEmpty() || destination.isEmpty() || date.isEmpty()) {
-                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-        });
 
         Button btnViewAirports = findViewById(R.id.btnViewAirports);
         btnViewAirports.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, AirportListActivity.class);
             startActivity(intent);
+        });
+
+        flightAdapter = new FlightListAdapter();
+        // Initialize ViewModel
+        flightViewModel = new ViewModelProvider(this).get(FlightViewModel.class);
+        flightViewModel.getAllFlights().observe(this, flights -> {
+            if (flights != null && !flights.isEmpty()) {
+                flightAdapter.submitList(flights);
+            }
         });
 
         airportAdapter = new AirportListAdapter();
@@ -254,6 +261,29 @@ public class MainActivity extends AppCompatActivity {
                 //runOnUiThread(() -> populateAirportDropdowns(dtos));
             }
         }).start();
+
+        // Search button logic
+        btnSearchFlights.setOnClickListener(v -> {
+            String searchDate = etDate.getText().toString().trim();
+
+            if (searchOrigin == null || searchDestination == null || searchDate.isEmpty()) {
+                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+                return;
+            } else {
+                flightViewModel.searchFlights(searchOrigin, searchDestination, searchDate)
+                        .observe(this, flights -> {
+                            if (flights == null || flights.isEmpty()) {
+                                Toast.makeText(this, "No flights found", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Log.e("JELENA", "Found flights for the search parameters");
+                            }
+                        });
+            }
+
+        });
+
+
+
 
 
         //mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -319,12 +349,14 @@ public class MainActivity extends AppCompatActivity {
         etOrigin.setOnItemClickListener((parent, view, position, id) -> {
             AirportEntity selectedAirport = (AirportEntity) parent.getAdapter().getItem(position);
             Log.e("Selected Airport", "Name: " + selectedAirport.getName() + ", IATA: " + selectedAirport.getIataCode());
+            searchOrigin = selectedAirport;
         });
 
         // Handling item clicks for destination
         etDestination.setOnItemClickListener((parent, view, position, id) -> {
             AirportEntity selectedAirport = (AirportEntity) parent.getAdapter().getItem(position);
             Log.e("Selected Destination", "Name: " + selectedAirport.getName() + ", IATA: " + selectedAirport.getIataCode());
+            searchDestination = selectedAirport;
         });
     }
 

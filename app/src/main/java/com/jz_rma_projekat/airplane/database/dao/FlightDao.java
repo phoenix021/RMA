@@ -55,9 +55,12 @@ public interface FlightDao {
     @Query("SELECT * FROM flights ORDER BY departureTime ASC")
     LiveData<List<FlightEntity>> getAllFlightsLive();
 
+    @Query("SELECT * FROM flights WHERE departureAirportId = :origin AND arrivalAirportId = :destination AND date(departureTime) = :date")
+    List<FlightEntity> searchFlightsSync(String origin, String destination, String date);
+
     // ✅ Get all flights synchronously (non-LiveData)
     @Query("SELECT * FROM flights ORDER BY departureTime ASC")
-    List<FlightEntity> getAllFlightsSync();
+    LiveData<List<FlightEntity>> getAllFlightsSync();
 
     // ✅ Find flights by flight number
     @Query("SELECT * FROM flights WHERE flightNumber = :flightNumber LIMIT 1")
@@ -78,4 +81,8 @@ public interface FlightDao {
     // ✅ Find flights by status (e.g., “active”, “landed”, “cancelled”)
     @Query("SELECT * FROM flights WHERE status = :status ORDER BY departureTime ASC")
     LiveData<List<FlightEntity>> findFlightsByStatus(String status);
+
+    @Query("SELECT * FROM flights WHERE departureAirportId = :origin AND arrivalAirportId = :destination AND date(departureTime) = :date")
+    LiveData<List<FlightEntity>> searchFlights(String origin, String destination, String date);
+
 }

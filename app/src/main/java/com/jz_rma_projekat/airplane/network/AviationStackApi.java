@@ -2,9 +2,12 @@ package com.jz_rma_projekat.airplane.network;
 
 import com.jz_rma_projekat.airplane.database.api_models.AirlineResponse;
 import com.jz_rma_projekat.airplane.database.api_models.AirportsResponse;
+import com.jz_rma_projekat.airplane.database.api_models.ApiResponse;
 import com.jz_rma_projekat.airplane.database.api_models.FlightResponse;
 import com.jz_rma_projekat.airplane.database.api_models.RouteResponse;
 import com.jz_rma_projekat.airplane.database.api_models.ScheduleResponse;
+import com.jz_rma_projekat.airplane.database.dto.FlightInfoDto;
+import com.jz_rma_projekat.airplane.database.dto.FlightsDto;
 
 import retrofit2.Call;
 import retrofit2.http.GET;
@@ -26,6 +29,34 @@ public interface AviationStackApi {
     Call<FlightResponse> getFlightsByDate(
             @Query("access_key") String accessKey,
             @Query("flight_date") String flightDate
+    );
+
+    @GET("flights")
+    Call<FlightResponse> getFlightsByRouteAndDate(
+            @Query("access_key") String accessKey,
+            @Query("dep_iata") String originIata,
+            @Query("arr_iata") String destinationIata,
+            @Query("flight_date") String flightDate
+    );
+
+    @GET("flights")
+    Call<ApiResponse<FlightInfoDto>> getFlightsByRoute(
+            @Query("access_key") String accessKey,
+            @Query("dep_iata") String originIata,
+            @Query("arr_iata") String destinationIata
+    );
+
+    @GET("flights")
+    Call<ApiResponse<FlightsDto>> getFlightsByRoute(
+            @Query("access_key") String accessKey,
+            @Query("limit") int limit,
+            @Query("offset") int offset
+    );
+
+    @GET("routes")
+    Call<RouteResponse> getRoutesByDeparture(
+            @Query("access_key") String accessKey,
+            @Query("dep_iata") String departureIata
     );
 
     //@GET("airports")

@@ -1,7 +1,9 @@
 package com.jz_rma_projekat.airplane.utils.mappers;
 
 import com.jz_rma_projekat.airplane.database.dto.FlightDto;
+import com.jz_rma_projekat.airplane.database.dto.FlightInfoDto;
 import com.jz_rma_projekat.airplane.database.dto.FlightWithAirportsDto;
+import com.jz_rma_projekat.airplane.database.dto.FlightsDto;
 import com.jz_rma_projekat.airplane.database.entities.FlightEntity;
 
 import java.util.ArrayList;
@@ -82,5 +84,76 @@ public class FlightMapper {
         }
         return entities;
     }
+
+    public static FlightEntity flightsInfoDtoToEntity(FlightInfoDto dto) {
+        FlightEntity entity = new FlightEntity();
+        entity.setFlightNumber(dto.flight.number);
+        entity.setDepartureTime(dto.departure.scheduled);
+        entity.setArrivalTime(dto.arrival.scheduled);
+        entity.setStatus(dto.status);
+        entity.setDepartureAirportId(dto.departure.iata);
+        entity.setArrivalAirportId(dto.arrival.iata);
+        return entity;
+    }
+
+    public static List<FlightEntity> flightsInfoDtoToEntityList(List<FlightInfoDto> dtoList) {
+        List<FlightEntity> entities = new ArrayList<>();
+        for (FlightInfoDto dto : dtoList) {
+            entities.add(flightsInfoDtoToEntity(dto));
+        }
+        return entities;
+    }
+
+
+
+    public static FlightEntity fullFlightsDtoToEntity(FlightsDto dto) {
+        FlightEntity entity = new FlightEntity();
+
+        entity.setFlightDate(dto.flight_date);
+        entity.setStatus(dto.flight_status);
+        entity.setDepartureAirportId(dto.departure.iata);
+        entity.setArrivalAirportId(dto.arrival.iata);
+
+        if (dto.departure != null) {
+            entity.setDepartureAirport(dto.departure.airport);
+            entity.setDepartureIata(dto.departure.iata);
+            entity.setDepartureIcao(dto.departure.icao);
+            entity.setDepartureTerminal(dto.departure.terminal);
+            entity.setDepartureGate(dto.departure.gate);
+            entity.setDepartureScheduled(dto.departure.scheduled);
+        }
+
+        if (dto.arrival != null) {
+            entity.setArrivalAirport(dto.arrival.airport);
+            entity.setArrivalIata(dto.arrival.iata);
+            entity.setArrivalIcao(dto.arrival.icao);
+            entity.setArrivalTerminal(dto.arrival.terminal);
+            entity.setArrivalGate(dto.arrival.gate);
+            entity.setArrivalScheduled(dto.arrival.scheduled);
+        }
+
+        if (dto.airline != null) {
+            entity.setAirlineName(dto.airline.name);
+            entity.setAirlineIata(dto.airline.iata);
+            entity.setAirlineIcao(dto.airline.icao);
+        }
+
+        if (dto.flight != null) {
+            entity.setFlightNumber(dto.flight.number);
+            entity.setFlightIata(dto.flight.iata);
+            entity.setFlightIcao(dto.flight.icao);
+        }
+
+        return entity;
+    }
+
+    public static List<FlightEntity> fullFlightsDtoToEntityList(List<FlightsDto> apiFlights) {
+        List<FlightEntity> entities = new ArrayList<>();
+        for (FlightsDto apiFlight : apiFlights) {
+            entities.add(fullFlightsDtoToEntity(apiFlight));
+        }
+        return entities;
+    }
+
 }
 
