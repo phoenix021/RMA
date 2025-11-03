@@ -24,25 +24,18 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.material.snackbar.Snackbar;
 import com.jz_rma_projekat.airplane.database.AppDatabase;
 import com.jz_rma_projekat.airplane.database.api_models.AirlineResponse;
-import com.jz_rma_projekat.airplane.database.api_models.FlightResponse;
 import com.jz_rma_projekat.airplane.database.dao.AirlineDao;
-import com.jz_rma_projekat.airplane.database.dao.AirportDao;
-import com.jz_rma_projekat.airplane.database.dao.FlightDao;
 import com.jz_rma_projekat.airplane.database.dto.AirlineDto;
 import com.jz_rma_projekat.airplane.database.dto.AirportDto;
-import com.jz_rma_projekat.airplane.database.dto.FlightWithAirportsDto;
 import com.jz_rma_projekat.airplane.database.entities.AirlineEntity;
-import com.jz_rma_projekat.airplane.database.entities.FlightEntity;
 import com.jz_rma_projekat.airplane.databinding.ActivityMainBinding;
 import com.jz_rma_projekat.airplane.database.entities.AirportEntity;
-import com.jz_rma_projekat.airplane.database.api_models.AirportsResponse;
 import com.jz_rma_projekat.airplane.network.AviationStackApi;
 import com.jz_rma_projekat.airplane.network.RetrofitClient;
+import com.jz_rma_projekat.airplane.ui.adapters.AirportAutoCompleteAdapter;
 import com.jz_rma_projekat.airplane.ui.adapters.AirportListAdapter;
 import com.jz_rma_projekat.airplane.ui.viewmodel.AirportViewModel;
 import com.jz_rma_projekat.airplane.utils.mappers.AirlineMapper;
-import com.jz_rma_projekat.airplane.utils.mappers.AirportMapper;
-import com.jz_rma_projekat.airplane.utils.mappers.FlightMapper;
 import com.jz_rma_projekat.airplane.ui.viewmodel.FlightViewModel;
 
 //import androidx.core.app.ActivityCompat;
@@ -54,6 +47,8 @@ import androidx.core.app.ActivityCompat;
 import android.os.Environment;
 import android.os.Looper;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -66,12 +61,12 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import retrofit2.Call;
@@ -83,29 +78,24 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 
 public class MainActivity extends AppCompatActivity {
      private static final String DEBUG_TAG = "MainActivity";
 
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
     private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 1002;
 
     AirportViewModel airportViewModel;
+    private AirportAutoCompleteAdapter airportautocompleteAdapter;
 
     private RecyclerView rvFlights;
     private FlightsAdapter adapter;
@@ -134,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
     private LocationRequest mLocationRequest;
     private boolean mRequestingLocationUpdates = false;
 
-    private AirportListAdapter airplaneAdapter;
+    private AirportListAdapter airportAdapter;
 
 
     @Override
@@ -183,9 +173,7 @@ public class MainActivity extends AppCompatActivity {
             // findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
         }
 
-        etCountry = findViewById(R.id.etCountry);
-        etOrigin = findViewById(R.id.etOrigin);
-        etDestination = findViewById(R.id.etDestination);
+
         etDate = findViewById(R.id.etDate);
         etAirplanes = findViewById(R.id.airplanes);
         btnSearchFlights = findViewById(R.id.btnSearchFlights);
@@ -225,17 +213,23 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        airplaneAdapter = new AirportListAdapter();
+        airportAdapter = new AirportListAdapter();
         // Initialize ViewModel
         airportViewModel = new ViewModelProvider(this).get(AirportViewModel.class);
 
         // Observe the LiveData for airport data
         airportViewModel.getAllAirports().observe(this, airports -> {
-            if (airports != null) {
+            if (airports != null && !airports.isEmpty()) {
                 // Update the RecyclerView with the airport list
-                airplaneAdapter.submitList(airports);
+                airportAdapter.submitList(airports);
 
-                populateAirportsDropdown(airports);
+                if (airportautocompleteAdapter == null) {
+                    populateAirportsDropdown(airports);
+                } else {
+                    // LiveData emitted a new list — refresh it
+                    airportautocompleteAdapter.updateAllAirports(airports);
+                }
+                //populateAirlineDropdowns();
             }
         });
 
@@ -261,7 +255,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
 
-        //getAirportsFromDatabase();
 
         //mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -289,47 +282,50 @@ public class MainActivity extends AppCompatActivity {
     //        ◦ Dobijanje adrese na osnovu lokacije – geocoding,
     //        ◦ Definisanje oblasti u odnosu na neku lokaciju - geofences, .
 
-    private void populateAirportsDropdown(List<AirportEntity> airports){
-        List<String> airportNames = new ArrayList<>(0);
-        Set<String> uniqueCountries = new HashSet<>();
-        for(AirportEntity airport :airports)
-        {
-            if (airport.getName() != null && airport.getIataCode() != null) {
-                String formatted = airport.getName() + " (" + airport.getIataCode() + ") Country:" + airport.getCountry();
-                // Log.e("MainActivity", "Populating airport: " + formatted);
-
-                airportNames.add(formatted);
-            }
-
-            if (airport.getCountry() != null && !airport.getCountry().isEmpty()) {
-                uniqueCountries.add(airport.getCountry());
-            }
-        }
-
-        List<String> airportCountries = new ArrayList<>(uniqueCountries);
-        Collections.sort(airportCountries);
-
-        ArrayAdapter<String> countryAdapter = new ArrayAdapter<>(
-                MainActivity.this,
-                android.R.layout.simple_dropdown_item_1line,
-                airportCountries
-        );
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                MainActivity.this,
-                android.R.layout.simple_dropdown_item_1line,
-                airportNames
-        );
+    private void populateAirportsDropdown(List<AirportEntity> airports) {
+        // Create the custom adapter to display airport names with IATA codes
+        airportautocompleteAdapter = new AirportAutoCompleteAdapter(MainActivity.this, airports);
+        //AirportAutoCompleteAdapter countryAdapter = new AirportAutoCompleteAdapter(MainActivity.this, airports);
 
         etCountry = findViewById(R.id.etCountry);
         etOrigin = findViewById(R.id.etOrigin);
         etDestination = findViewById(R.id.etDestination);
-        //etAirplanes = findViewById(R.id.airplanes);
 
-        etOrigin.setAdapter(adapter);
-        etDestination.setAdapter(adapter);
-        etCountry.setAdapter(countryAdapter);
-        //etAirplanes.setAdapter(airplanesAdapter);
+        // Set the custom adapter for both Origin and Destination fields
+        //etOrigin.setThreshold(2);
+        etOrigin.setAdapter(airportautocompleteAdapter);
+        etOrigin.setThreshold(2);
+        etOrigin.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void afterTextChanged(Editable editable) {
+                airportautocompleteAdapter.getFilter().filter(editable.toString());
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                airportautocompleteAdapter.getFilter().filter(s);
+            }
+        });
+        //etDestination.setThreshold(2);
+        etDestination.setAdapter(airportautocompleteAdapter);
+        //etCountry.setAdapter(countryAdapter);
+
+        // Handling item clicks for origin
+        etOrigin.setOnItemClickListener((parent, view, position, id) -> {
+            AirportEntity selectedAirport = (AirportEntity) parent.getAdapter().getItem(position);
+            Log.e("Selected Airport", "Name: " + selectedAirport.getName() + ", IATA: " + selectedAirport.getIataCode());
+        });
+
+        // Handling item clicks for destination
+        etDestination.setOnItemClickListener((parent, view, position, id) -> {
+            AirportEntity selectedAirport = (AirportEntity) parent.getAdapter().getItem(position);
+            Log.e("Selected Destination", "Name: " + selectedAirport.getName() + ", IATA: " + selectedAirport.getIataCode());
+        });
     }
 
     private void createNotificationChannel() {
@@ -379,51 +375,7 @@ public class MainActivity extends AppCompatActivity {
         notificationManager.notify(1, builder.build());
     }
 
-void populateAirportDropdowns(List<AirportDto> airports){
-    List<String> airportNames = new ArrayList<>(0);
-    Set<String> uniqueCountries = new HashSet<>();
-    for(AirportDto airport :airports)
-    {
-        if (airport.getName() != null && airport.getIataCode() != null) {
-            String formatted = airport.getName() + " (" + airport.getIataCode() + ") Country:" + airport.getCountry();
-           // Log.e("MainActivity", "Populating airport: " + formatted);
-
-            airportNames.add(formatted);
-        }
-
-        if (airport.getCountry() != null && !airport.getCountry().isEmpty()) {
-            uniqueCountries.add(airport.getCountry());
-        }
-    }
-
-    List<String> airportCountries = new ArrayList<>(uniqueCountries);
-    Collections.sort(airportCountries);
-
-    ArrayAdapter<String> countryAdapter = new ArrayAdapter<>(
-            MainActivity.this,
-            android.R.layout.simple_dropdown_item_1line,
-            airportCountries
-    );
-
-    ArrayAdapter<String> adapter = new ArrayAdapter<>(
-            MainActivity.this,
-            android.R.layout.simple_dropdown_item_1line,
-            airportNames
-    );
-
-
-
-    etCountry = findViewById(R.id.etCountry);
-    etOrigin = findViewById(R.id.etOrigin);
-    etDestination = findViewById(R.id.etDestination);
-    //etAirplanes = findViewById(R.id.airplanes);
-
-    etOrigin.setAdapter(adapter);
-    etDestination.setAdapter(adapter);
-    etCountry.setAdapter(countryAdapter);
-    //etAirplanes.setAdapter(airplanesAdapter);
-
-
+void populateAirlineDropdowns(){
     new Thread(new Runnable() {
         @Override
         public void run() {
@@ -460,21 +412,6 @@ void populateAirportDropdowns(List<AirportDto> airports){
     }).start();
 }
 
-
-    private void loadAirportsForCountry(String country) {
-        new Thread(() -> {
-            AirportDao dao = db.airportDao();
-            List<AirportEntity> airportEntities = dao.getAirportsByCountry(country);
-            List<AirportDto> airports = AirportMapper.toDtoList(airportEntities);
-
-            runOnUiThread(() -> {
-                populateAirportDropdowns(airports);
-                Toast.makeText(MainActivity.this,
-                        "Loaded " + airports.size() + " airports in " + country,
-                        Toast.LENGTH_SHORT).show();
-            });
-        }).start();
-    }
     protected void createLocationRequest() {
         // ✅ Correct usage of LocationRequest.Builder (new API)
         mLocationRequest = new LocationRequest.Builder(
@@ -493,7 +430,6 @@ void populateAirportDropdowns(List<AirportDto> airports){
         }
     }
 
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
     private void startLocationUpdates() {
         ActivityCompat.requestPermissions(this,
                 new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
@@ -563,60 +499,6 @@ void populateAirportDropdowns(List<AirportDto> airports){
     //        db.airportDao().insertAll(airports);
     //    });
     //}
-
-    public void saveAirportsToDatabase(List<AirportDto> airports){
-        new Thread(() -> {
-            List<AirportEntity> airportEntities = new ArrayList<>();
-            for (AirportDto airport : airports) {
-                airportEntities.add(AirportMapper.toEntity(airport));
-            }
-
-            db.airportDao().insertAll(airportEntities);
-            Log.d("Room", "Airports saved to DB");
-        }).start();
-    }
-
-
-    public void getAirportsFromDatabase() {
-        new Thread(() -> {
-            List<AirportEntity> airportEntities = db.airportDao().getAllAirports();
-
-            if (airportEntities == null || airportEntities.isEmpty()) {
-                Log.d("Room", "No airports found in DB");
-            } else {
-                for (AirportEntity airport : airportEntities) {
-                    Log.d("Room", "Airport: " + airport.getName() + " (" + airport.getIataCode() + ")");
-                }
-            }
-            List<AirportDto> airportDtos = airportEntities.stream()
-                    .map(entity -> AirportMapper.toDto(entity))
-                    .collect(Collectors.toList());
-
-            runOnUiThread(() -> {
-                populateAirportDropdowns(airportDtos); // safely update AutoCompleteTextView
-            });
-        }).start();
-    }
-    public void preloadAutoComplete(){
-        new Thread(() -> {
-            List<AirportEntity> airportEntities = db.airportDao().getAllAirports();
-            List<String> names = new ArrayList<>();
-
-            for (AirportEntity airport : airportEntities) {
-                names.add(airport.getName() + " (" + airport.getIataCode() + ")");
-            }
-
-            runOnUiThread(() -> {
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                        MainActivity.this,
-                        android.R.layout.simple_dropdown_item_1line,
-                        names
-                );
-                etOrigin.setAdapter(adapter);
-                etDestination.setAdapter(adapter);
-            });
-        }).start();
-    }
 
     //provera konektcije
     //sa sajlajdova

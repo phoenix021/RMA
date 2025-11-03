@@ -56,4 +56,9 @@ public class AirportEntity {
     public void setCountry(String country) { this.country = country; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
     public void setTimezone(String timezone) { this.timezone = timezone; }
+
+    @Override
+    public String toString() {
+        return name + " " + iataCode + " " + country;
+    }
 }

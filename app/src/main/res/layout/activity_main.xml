@@ -68,7 +68,8 @@
             android:hint="Select Country"
             android:inputType="text"
             android:padding="12dp"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp"
+            android:completionThreshold="1"/>
 
         <!-- Origin Airport -->
         <AutoCompleteTextView
@@ -78,7 +79,8 @@
             android:hint="Airplanes"
             android:inputType="text"
             android:padding="12dp"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp"
+            android:completionThreshold="1"/>
 
         <!-- Origin Airport -->
         <AutoCompleteTextView
@@ -88,7 +90,12 @@
             android:hint="Origin Airport"
             android:inputType="text"
             android:padding="12dp"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:dropDownHeight="200dp"
+            android:dropDownWidth="match_parent"
+            android:completionThreshold="1"/>
 
         <AutoCompleteTextView
             android:id="@+id/etDestination"
@@ -97,7 +104,8 @@
             android:hint="Destination Airport"
             android:inputType="text"
             android:padding="12dp"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp"
+            android:completionThreshold="1"/>
 
         <!-- Date -->
         <EditText
