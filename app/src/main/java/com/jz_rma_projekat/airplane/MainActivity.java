@@ -35,6 +35,7 @@ import com.jz_rma_projekat.airplane.network.RetrofitClient;
 import com.jz_rma_projekat.airplane.ui.adapters.AirportAutoCompleteAdapter;
 import com.jz_rma_projekat.airplane.ui.adapters.AirportListAdapter;
 import com.jz_rma_projekat.airplane.ui.adapters.FlightListAdapter;
+import com.jz_rma_projekat.airplane.ui.viewmodel.AirlineViewModel;
 import com.jz_rma_projekat.airplane.ui.viewmodel.AirportViewModel;
 import com.jz_rma_projekat.airplane.utils.mappers.AirlineMapper;
 import com.jz_rma_projekat.airplane.ui.viewmodel.FlightViewModel;
@@ -97,6 +98,10 @@ public class MainActivity extends AppCompatActivity {
     private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 1002;
 
     AirportViewModel airportViewModel;
+    AirlineViewModel airlineViewModel;
+    List<AirlineEntity> airlines;
+
+    ArrayAdapter<String> airplanesAdapter;
     private AirportAutoCompleteAdapter airportautocompleteAdapter;
 
     private RecyclerView rvFlights;
@@ -236,31 +241,38 @@ public class MainActivity extends AppCompatActivity {
                     // LiveData emitted a new list — refresh it
                     airportautocompleteAdapter.updateAllAirports(airports);
                 }
-                //populateAirlineDropdowns();
             }
         });
 
 
-        db = AppDatabase.getInstance(getApplicationContext());
-        new Thread(() -> {
+        etAirplanes = findViewById(R.id.airplanes);
+        airplanesAdapter = new ArrayAdapter<>(
+                MainActivity.this,
+                android.R.layout.simple_list_item_1,
+                new ArrayList<>()
+        );
+        etAirplanes.setAdapter(airplanesAdapter);
 
-            AirlineDao airlineDao = db.airlineDao();
+        // Initialize ViewModel
+        airlineViewModel = new ViewModelProvider(this).get(AirlineViewModel.class);
+        airlineViewModel.getAllAirlines().observe(this, airlines -> {
+            if (airlines != null && !airlines.isEmpty()) {
+                this.airlines = airlines;
 
-             int count = 0;
-             boolean exists = false;
 
-            count = airlineDao.getCount(); // number of records
-            exists = airlineDao.hasAny(); // true if at least one row exists
-            if (!exists) {
-                fetchAndSaveAllAirlines();
-            } else {
-                count = airlineDao.getCount();
-                Log.d("MainActivity", "Number of airlines: " + count);
-                List<AirlineEntity> airlineEntities = airlineDao.getAllAirlines();
-                //List<AirlineDto> dtos =  AirportMapper.toDtoList(airlineEntities);
-                //runOnUiThread(() -> populateAirportDropdowns(dtos));
+                // Convert the list of AirlineDto to a list of Strings
+                List<String> airlineStrings = airlines.stream()
+                        .map(airline -> String.format("%s (%s) - %s - %s",
+                                airline.getAirlineName(),
+                                airline.getIataCode(),
+                                airline.getCountryName(),
+                                airline.getFleetSize()))
+                        .collect(Collectors.toList());
+                airplanesAdapter.clear();
+                airplanesAdapter.addAll(airlineStrings);
+                airplanesAdapter.notifyDataSetChanged();
             }
-        }).start();
+        });
 
         // Search button logic
         btnSearchFlights.setOnClickListener(v -> {
@@ -279,7 +291,6 @@ public class MainActivity extends AppCompatActivity {
                             }
                         });
             }
-
         });
 
 
@@ -406,43 +417,6 @@ public class MainActivity extends AppCompatActivity {
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
         notificationManager.notify(1, builder.build());
     }
-
-void populateAirlineDropdowns(){
-    new Thread(new Runnable() {
-        @Override
-        public void run() {
-            // This block runs in the background thread
-            AirlineDao airlineDao = db.airlineDao();
-            etAirplanes = findViewById(R.id.airplanes);
-
-            // Perform the database operation
-            List<AirlineDto> airlines = AirlineMapper.toDtoList(airlineDao.getAllAirlines());
-
-            // Convert the list of AirlineDto to a list of Strings
-            List<String> airlineStrings = airlines.stream()
-                    .map(airline -> String.format("%s (%s) - %s - %s",
-                            airline.getAirlineName(),
-                            airline.getIataCode(),
-                            airline.getCountryName(),
-                            airline.getFleetSize()))
-                    .collect(Collectors.toList());
-
-            // Now that the background task is complete, update the UI on the main thread
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    // Update UI elements here
-                    ArrayAdapter<String> airplanesAdapter = new ArrayAdapter<>(
-                            MainActivity.this,
-                            android.R.layout.simple_list_item_1,
-                            airlineStrings
-                    );
-                    etAirplanes.setAdapter(airplanesAdapter);
-                }
-            });
-        }
-    }).start();
-}
 
     protected void createLocationRequest() {
         // ✅ Correct usage of LocationRequest.Builder (new API)
