@@ -98,5 +98,12 @@
             android:textColor="@android:color/white"
             android:layout_marginTop="16dp"/>
 
+        <FrameLayout
+            android:id="@+id/fragment_container_details"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:visibility="gone" />
+
+
     </LinearLayout>
 </ScrollView>

@@ -31,6 +31,7 @@ import org.maplibre.android.maps.MapLibreMap;
 //import org.maplibre.android.maps.MapboxMap;
 import org.maplibre.android.maps.OnMapReadyCallback;
 import org.maplibre.android.maps.Style;
+import org.maplibre.android.style.layers.LineLayer;
 import org.maplibre.android.style.layers.PropertyFactory;
 import org.maplibre.android.style.layers.SymbolLayer;
 import org.maplibre.android.style.sources.GeoJsonSource;
@@ -38,7 +39,11 @@ import org.maplibre.geojson.Feature;
 
 
 import org.maplibre.geojson.FeatureCollection;
+import org.maplibre.geojson.LineString;
 import org.maplibre.geojson.Point;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class FlightMapFragment extends Fragment implements OnMapReadyCallback {
 
@@ -49,13 +54,24 @@ public class FlightMapFragment extends Fragment implements OnMapReadyCallback {
     private static final String MARKER_ID = "marker-id";
     private static final String SOURCE_ID = "source-id";
 
-    private static final double LATITUDE = 37.7749;
-    private static final double LONGITUDE = -122.4194;
+    private static double LATITUDE = 37.7749;
+    private static double LONGITUDE = -122.4194;
+    private static String NAME = "";
+
 
     ImageButton btnZoomIn;
     ImageButton btnZoomOut;
     ImageButton recenterBtn;
 
+    public static FlightMapFragment newInstance(double latitude, double longitude, String airportName) {
+        FlightMapFragment fragment = new FlightMapFragment();
+        Bundle args = new Bundle();
+        args.putDouble("lat", latitude);
+        args.putDouble("lng", longitude);
+        args.putString("name", airportName);
+        fragment.setArguments(args);
+        return fragment;
+    }
 
     @Nullable
     @Override
@@ -63,6 +79,11 @@ public class FlightMapFragment extends Fragment implements OnMapReadyCallback {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
+        if (getArguments() != null) {
+            LATITUDE = getArguments().getDouble("lat");
+            LONGITUDE = getArguments().getDouble("lng");
+            NAME = getArguments().getString("name");
+        }
         Log.e("FlightMapFragment", "Before MapLibre.getInstance()");
         mapLibreInstance = MapLibre.getInstance(requireContext().getApplicationContext(), null, WellKnownTileServer.MapTiler);
         Log.e("FlightMapFragment", "After MapLibre.getInstance()");
@@ -108,6 +129,7 @@ public class FlightMapFragment extends Fragment implements OnMapReadyCallback {
 
        // String styleUrl = "https://demotiles.maplibre.org/style.json";
        // mapLibreMap.getUiSettings().setZoomControlsEnabled(true);
+        //mapLibreMap.setStyle(Style.getPredefinedStyle(WellKnownTileServer.MapTiler));
         mapLibreMap.getUiSettings().setZoomGesturesEnabled(true);
         mapLibreMap.setStyle(new Style.Builder().fromUri("https://demotiles.maplibre.org/style.json"), style -> {
             Log.e("MapLibre in FlightMapFragment", "Style loaded, moving camera...");
@@ -156,6 +178,46 @@ public class FlightMapFragment extends Fragment implements OnMapReadyCallback {
 
         return bitmap;
     }
+
+    private void drawCurvedFlightPath(Style style, LatLng p1, LatLng p2, double k) {
+        // Calculate midpoint between start and end
+        double midLat = (p1.getLatitude() + p2.getLatitude()) / 2;
+        double midLon = (p1.getLongitude() + p2.getLongitude()) / 2;
+        LatLng mid = new LatLng(midLat, midLon);
+
+        // Curve "height" (adjust for curvature)
+        double dx = p2.getLongitude() - p1.getLongitude();
+        double dy = p2.getLatitude() - p1.getLatitude();
+        double d = Math.sqrt(dx * dx + dy * dy);
+        double curveHeight = d * k;
+
+        // Shift midpoint upward (north/south) for curvature
+        LatLng control = new LatLng(mid.getLatitude() + curveHeight, mid.getLongitude());
+
+        // Generate smooth points along the curve
+        int numPoints = 100;
+        List<Point> points = new ArrayList<>();
+        for (int i = 0; i <= numPoints; i++) {
+            double t = i / (double) numPoints;
+            double lat = (1 - t) * (1 - t) * p1.getLatitude() + 2 * (1 - t) * t * control.getLatitude() + t * t * p2.getLatitude();
+            double lon = (1 - t) * (1 - t) * p1.getLongitude() + 2 * (1 - t) * t * control.getLongitude() + t * t * p2.getLongitude();
+            points.add(Point.fromLngLat(lon, lat));
+        }
+
+        // Add GeoJSON source for the curve
+        GeoJsonSource routeSource = new GeoJsonSource("flight-route", Feature.fromGeometry(LineString.fromLngLats(points)));
+        style.addSource(routeSource);
+
+        // Add line layer to the map
+        LineLayer routeLayer = new LineLayer("flight-route-layer", "flight-route")
+                .withProperties(
+                        PropertyFactory.lineColor("#FF4081"), // pink-ish
+                        PropertyFactory.lineWidth(3f),
+                        PropertyFactory.lineOpacity(0.8f)
+                );
+        style.addLayer(routeLayer);
+    }
+
 
 
     // Forward lifecycle events to the MapView

@@ -3,16 +3,20 @@ package com.jz_rma_projekat.airplane;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import com.jz_rma_projekat.airplane.FlightMapFragment;
 
 import com.jz_rma_projekat.airplane.database.entities.AirportEntity;
 
 public class AirportDetailsActivity extends AppCompatActivity {
+    FlightMapFragment map;
     private TextView tvAirportName, tvAirportIATA, tvCountry, tvCityCode,
             tvIcaoCode, tvTimezone, tvCoordinates, tvPhoneNumber;
 
@@ -49,6 +53,20 @@ public class AirportDetailsActivity extends AppCompatActivity {
         // Directions button
         Button btnDirections = findViewById(R.id.btnDirections);
         btnDirections.setOnClickListener(v -> openGoogleMapsDirections());
+
+        if (savedInstanceState == null) {
+            FrameLayout container = findViewById(R.id.fragment_container_details);
+            container.setVisibility(View.VISIBLE); // Make it visible first
+
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(container.getId(), FlightMapFragment.newInstance(
+                            airport.getLatitude(),
+                            airport.getLongitude(),
+                            airport.getName()
+                    ))
+                    .commit();
+        }
     }
 
     private void openGoogleMapsDirections() {
