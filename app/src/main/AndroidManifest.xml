@@ -34,6 +34,7 @@
         </activity>
         <activity android:name=".AirportListActivity" />
         <activity android:name=".FlightsActivity" />
+        <activity android:name=".FlightDetailsActivity" />
 
 
         <provider

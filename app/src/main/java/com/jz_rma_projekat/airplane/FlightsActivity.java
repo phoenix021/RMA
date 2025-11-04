@@ -72,7 +72,7 @@ import java.util.List;
 
                 Intent intent = new Intent(FlightsActivity.this, FlightDetailsActivity.class);
                 intent.putExtra("flight", flight); // flightEntity must implement Serializable or Parcelable
-                //startActivity(intent);
+                startActivity(intent);
             });
         }
     }

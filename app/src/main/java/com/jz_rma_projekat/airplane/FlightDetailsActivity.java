@@ -1,6 +1,7 @@
 package com.jz_rma_projekat.airplane;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -22,14 +23,12 @@ public class FlightDetailsActivity extends AppCompatActivity {
     private TextView  tvDepartureAirport, tvDepartureGate;
     private TextView  tvArrivalAirport, tvArrivalGate;
 
-
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_flight_details);
 
-        // Find all views
+         // Find all views
         tvFlightNumber = findViewById(R.id.tvFlightNumber);
         tvFlightDate = findViewById(R.id.tvFlightDate);
         tvRoute = findViewById(R.id.tvRoute);
@@ -51,39 +50,31 @@ public class FlightDetailsActivity extends AppCompatActivity {
         if (flight != null) {
             populateFlightDetails(flight);
         }
-
-        flightViewModel = new ViewModelProvider(this).get(FlightViewModel.class);
-
-        // Get flight ID from intent
-        long flightId = getIntent().getLongExtra(EXTRA_FLIGHT_ID, -1);
-        if (flightId != -1) {
-            flightViewModel.getFlightById(flightId).observe(this, this::populateFlightDetails);
-        }
     }
 
     private void populateFlightDetails(FlightEntity flight) {
         if (flight == null) return;
 
         // Flight general info
-        tvFlightNumber.setText(flight.getFlightNumber());
-        tvFlightDate.setText(flight.getFlightDate());
-        tvRoute.setText(flight.getDepartureAirportId() + " ➜ " + flight.getArrivalAirportId());
+        tvFlightNumber.setText("Flight number: " + flight.getFlightNumber());
+        tvFlightDate.setText("Flight date: "+flight.getFlightDate());
+        tvRoute.setText("Route: " +flight.getDepartureAirportId() + " ➜ " + flight.getArrivalAirportId());
         tvStatus.setText(flight.getStatus());
 
         // Departure info
-        tvDepartureTime.setText(flight.getDepartureTime());
-        tvDepartureAirport.setText(flight.getDepartureAirport() + " / " +
+        tvDepartureTime.setText("Departure Time: " + flight.getDepartureTime());
+        tvDepartureAirport.setText("Departure Airport: "+flight.getDepartureAirport() + " / " +
                 flight.getDepartureIata() + " / " + flight.getDepartureIcao());
-        tvDepartureGate.setText(flight.getDepartureGate() + " / " + flight.getDepartureTerminal());
+        tvDepartureGate.setText("Departure Gate: "+flight.getDepartureGate() + " / " + flight.getDepartureTerminal());
 
         // Arrival info
-        tvArrivalTime.setText(flight.getArrivalTime());
-        tvArrivalAirport.setText(flight.getArrivalAirport() + " / " +
+        tvArrivalTime.setText("Arrival Time: " + flight.getArrivalTime());
+        tvArrivalAirport.setText("Arrival Airport: "+flight.getArrivalAirport() + " / " +
                 flight.getArrivalIata() + " / " + flight.getArrivalIcao());
-        tvArrivalGate.setText(flight.getArrivalGate() + " / " + flight.getArrivalTerminal());
+        tvArrivalGate.setText("Arrival Gate: " +flight.getArrivalGate() + " / " + flight.getArrivalTerminal());
 
         // Airline info
-        tvAirline.setText(flight.getAirlineName() + " / " +
+        tvAirline.setText("Airline: " + flight.getAirlineName() + " / " +
                 flight.getAirlineIata() + " / " + flight.getAirlineIcao());
     }
 }
