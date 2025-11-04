@@ -20,6 +20,17 @@ public class AirportListAdapter extends ListAdapter<AirportEntity, AirportViewHo
         super(DIFF_CALLBACK);
     }
 
+    public interface OnAirportClickListener {
+        void onAirportClick(AirportEntity airport);
+    }
+
+    private OnAirportClickListener listener;
+
+
+    public void setOnAirportClickListener(OnAirportClickListener listener) {
+        this.listener = listener;
+    }
+
     @NonNull
     @Override
     public AirportViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -32,6 +43,12 @@ public class AirportListAdapter extends ListAdapter<AirportEntity, AirportViewHo
     public void onBindViewHolder(@NonNull AirportViewHolder holder, int position) {
         AirportEntity current = getItem(position);
         holder.bind(current);
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onAirportClick(current);
+            }
+        });
     }
 
     public static final DiffUtil.ItemCallback<AirportEntity> DIFF_CALLBACK =

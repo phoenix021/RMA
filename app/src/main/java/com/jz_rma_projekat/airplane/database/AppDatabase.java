@@ -20,7 +20,7 @@ import com.jz_rma_projekat.airplane.database.entities.ScheduleEntity;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@Database(entities = {AirportEntity.class, AirlineEntity.class, FlightEntity.class, RouteEntity.class, ScheduleEntity.class}, version = 6, exportSchema = false)
+@Database(entities = {AirportEntity.class, AirlineEntity.class, FlightEntity.class, RouteEntity.class, ScheduleEntity.class}, version = 7, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract AirportDao airportDao();
     public abstract FlightDao flightDao();
