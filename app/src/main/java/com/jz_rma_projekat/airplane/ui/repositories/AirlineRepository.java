@@ -72,5 +72,9 @@ public class AirlineRepository {
             }
         });
     }
+
+    public LiveData<AirlineEntity> getAirlineByName(String airlineName) {
+        return airlineDao.getAirlineByName(airlineName);
+    }
 }
 

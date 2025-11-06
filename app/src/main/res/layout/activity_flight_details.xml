@@ -120,5 +120,14 @@
             android:text="Airline Name / IATA / ICAO"
             android:paddingBottom="2dp" />
 
+        <Button
+            android:id="@+id/btnShowAirlineDetails"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Show airline details"
+            android:backgroundTint="@color/purple_500"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="16dp"/>
+
     </LinearLayout>
 </ScrollView>

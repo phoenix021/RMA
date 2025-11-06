@@ -1,7 +1,9 @@
 package com.jz_rma_projekat.airplane;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -10,6 +12,8 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.jz_rma_projekat.airplane.R;
 import com.jz_rma_projekat.airplane.database.entities.FlightEntity;
+import com.jz_rma_projekat.airplane.ui.viewmodel.AirlineViewModel;
+import com.jz_rma_projekat.airplane.ui.viewmodel.AirportViewModel;
 import com.jz_rma_projekat.airplane.ui.viewmodel.FlightViewModel;
 
 public class FlightDetailsActivity extends AppCompatActivity {
@@ -22,6 +26,8 @@ public class FlightDetailsActivity extends AppCompatActivity {
     private TextView  tvFlightDate;
     private TextView  tvDepartureAirport, tvDepartureGate;
     private TextView  tvArrivalAirport, tvArrivalGate;
+
+    private Button btnShowAirlineDetails;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -43,6 +49,8 @@ public class FlightDetailsActivity extends AppCompatActivity {
         tvArrivalGate = findViewById(R.id.tvArrivalGate);
 
         tvAirline = findViewById(R.id.tvAirline);
+
+        btnShowAirlineDetails = findViewById(R.id.btnShowAirlineDetails);
 
         // Get the FlightEntity passed from previous activity
         FlightEntity flight = (FlightEntity) getIntent().getSerializableExtra("flight");
@@ -76,5 +84,20 @@ public class FlightDetailsActivity extends AppCompatActivity {
         // Airline info
         tvAirline.setText("Airline: " + flight.getAirlineName() + " / " +
                 flight.getAirlineIata() + " / " + flight.getAirlineIcao());
+
+        if (flight.getAirlineName() != null){
+            btnShowAirlineDetails.setOnClickListener(v -> {
+                AirlineViewModel airportViewModel = new ViewModelProvider(this).get(AirlineViewModel.class);
+
+                // 4️⃣ Observe LiveData
+                airportViewModel.getAirlineByName(flight.getAirlineName()).observe(this, airline-> {
+                    if (airline != null && !airline.getAirlineName().isEmpty()) {
+                        Intent intent = new Intent(this, AirlineDetailsActivity.class);
+                        intent.putExtra("airline", airline);
+                        startActivity(intent);
+                    }
+                });
+            });
+        }
     }
 }

@@ -66,12 +66,8 @@ import java.util.List;
                 Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
 
 
-                //Intent intent = new Intent(FlightsActivity.this, FlightDetailsActivity.class);
-                //intent.putExtra(FlightDetailsActivity.EXTRA_FLIGHT_ID, flight.getId());
-                //startActivity(intent);
-
                 Intent intent = new Intent(FlightsActivity.this, FlightDetailsActivity.class);
-                intent.putExtra("flight", flight); // flightEntity must implement Serializable or Parcelable
+                intent.putExtra("flight", flight);
                 startActivity(intent);
             });
         }

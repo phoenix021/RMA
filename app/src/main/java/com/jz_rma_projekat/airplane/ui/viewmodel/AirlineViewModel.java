@@ -25,5 +25,9 @@ public class AirlineViewModel extends AndroidViewModel {
     public LiveData<List<AirlineEntity>> getAllAirlines() {
         return airlines;
     }
+
+    public LiveData<AirlineEntity> getAirlineByName(String airlineName) {
+        return repository.getAirlineByName(airlineName);
+    }
 }
 

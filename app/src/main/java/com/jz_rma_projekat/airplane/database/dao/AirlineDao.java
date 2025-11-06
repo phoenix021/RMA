@@ -1,5 +1,6 @@
 package com.jz_rma_projekat.airplane.database.dao;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
@@ -31,4 +32,6 @@ public interface AirlineDao {
     @Query("SELECT EXISTS(SELECT 1 FROM airlines LIMIT 1)")
     boolean hasAny();
 
+    @Query("SELECT * FROM airlines WHERE airlineName = :airlineName LIMIT 1")
+    LiveData<AirlineEntity> getAirlineByName(String airlineName);
 }
