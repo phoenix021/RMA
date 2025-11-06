@@ -3,8 +3,10 @@ package com.jz_rma_projekat.airplane.database.entities;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import java.io.Serializable;
+
 @Entity(tableName = "airlines")
-public class AirlineEntity {
+public class AirlineEntity implements Serializable {
     @PrimaryKey(autoGenerate = true)
     private int id;
 

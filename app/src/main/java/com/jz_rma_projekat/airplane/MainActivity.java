@@ -113,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
 
     private AppDatabase db;
 
+    Button showAirlinesBtn;
     Button downloadBtn;
     Button shareAirlinesBtn;
     Button downloadAllBtn;
@@ -184,6 +185,13 @@ public class MainActivity extends AppCompatActivity {
 
         downloadAllBtn = findViewById(R.id.btnDownloadAll);
         downloadAllBtn.setOnClickListener(v -> Utils.downloadAllCsvs(getApplication()));
+
+
+        showAirlinesBtn =  findViewById(R.id.btnShowAirlines);
+        showAirlinesBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, AirlinesListActivity.class);
+            startActivity(intent);
+        });
 
         //airplanesJsonBtn = findViewById(R.id.btnAirplanesJson);
         //airplanesJsonBtn.setOnClickListener(v -> downloadAllCsvs());

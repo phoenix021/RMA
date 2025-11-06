@@ -36,6 +36,9 @@
         <activity android:name=".FlightsActivity" />
         <activity android:name=".FlightDetailsActivity" />
         <activity android:name=".AirportDetailsActivity" />
+        <activity android:name=".AirlinesListActivity" />
+        <activity android:name=".AirlineDetailsActivity" />
+
 
 
         <provider
