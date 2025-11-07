@@ -2,32 +2,38 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:padding="16dp">
 
     <TextView
         android:id="@+id/tvFlightNumber"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Flight Number"
+        android:text="Flight Number "
+        android:layout_marginRight="@dimen/cardview_compat_inset_shadow"
+        android:layout_marginHorizontal="5dp"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/tvDeparture"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Departure Airport" />
+        android:layout_marginRight="@dimen/cardview_compat_inset_shadow"
+        android:text=" Departure Airport "
+        android:layout_marginHorizontal="5dp"/>
 
     <TextView
         android:id="@+id/tvArrival"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Arrival Airport" />
+        android:layout_marginHorizontal="5dp"
+        android:text=" Arrival Airport " />
 
     <TextView
         android:id="@+id/tvStatus"
         android:layout_width="wrap_content"
+        android:layout_marginHorizontal="5dp"
         android:layout_height="wrap_content"
-        android:text="Status" />
+        android:text=" Status " />
 
 </LinearLayout>

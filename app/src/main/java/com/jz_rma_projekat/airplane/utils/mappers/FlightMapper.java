@@ -4,6 +4,7 @@ import com.jz_rma_projekat.airplane.database.dto.FlightDto;
 import com.jz_rma_projekat.airplane.database.dto.FlightInfoDto;
 import com.jz_rma_projekat.airplane.database.dto.FlightWithAirportsDto;
 import com.jz_rma_projekat.airplane.database.dto.FlightsDto;
+import com.jz_rma_projekat.airplane.database.entities.AirlineEntity;
 import com.jz_rma_projekat.airplane.database.entities.FlightEntity;
 
 import java.util.ArrayList;
@@ -29,6 +30,55 @@ public class FlightMapper {
         entity.setArrivalTime(dto.getArrivalTime());
         entity.setStatus(dto.getStatus());
         // You will need to handle foreign keys (airport ids) in a real case
+        return entity;
+    }
+
+    public static FlightEntity allInfoToEntity(FlightInfoDto dto) {
+        if (dto == null) return null;
+
+        FlightEntity entity = new FlightEntity();
+
+        entity.setFlightDate(dto.flightDate);
+        entity.setStatus(dto.status);
+
+
+        // Airline
+        if (dto.airline != null) {
+            entity.setAirlineName(dto.airline.name);
+            entity.setAirlineIata(dto.airline.iata);
+            entity.setAirlineIcao(dto.airline.icao);
+        }
+
+        // Flight info
+        if (dto.flight != null) {
+            entity.setFlightNumber(dto.flight.number);
+            entity.setFlightIata(dto.flight.iata);
+            entity.setFlightIcao(dto.flight.icao);
+        }
+
+        // Departure info
+        if (dto.departure != null) {
+            entity.setDepartureAirport(dto.departure.airport);
+            entity.setDepartureIata(dto.departure.iata);
+            entity.setDepartureIcao(dto.departure.icao);
+            entity.setDepartureTerminal(dto.departure.terminal);
+            entity.setDepartureGate(dto.departure.gate);
+            entity.setDepartureScheduled(dto.departure.scheduled);
+            entity.setDepartureTime(dto.departure.actual != null ? dto.departure.actual : dto.departure.estimated);
+            entity.setDepartureAirportId(dto.departure.iata);
+        }
+
+        // Arrival info
+        if (dto.arrival != null) {
+            entity.setArrivalAirport(dto.arrival.airport);
+            entity.setArrivalIata(dto.arrival.iata);
+            entity.setArrivalIcao(dto.arrival.icao);
+            entity.setArrivalTerminal(dto.arrival.terminal);
+            entity.setArrivalGate(dto.arrival.gate);
+            entity.setArrivalScheduled(dto.arrival.scheduled);
+            entity.setArrivalTime(dto.arrival.actual != null ? dto.arrival.actual : dto.arrival.estimated);
+            entity.setArrivalAirportId(dto.arrival.iata);
+        }
         return entity;
     }
 
@@ -100,6 +150,14 @@ public class FlightMapper {
         List<FlightEntity> entities = new ArrayList<>();
         for (FlightInfoDto dto : dtoList) {
             entities.add(flightsInfoDtoToEntity(dto));
+        }
+        return entities;
+    }
+
+    public static List<FlightEntity> allInfoDtoToEntityList(List<FlightInfoDto> dtoList) {
+        List<FlightEntity> entities = new ArrayList<>();
+        for (FlightInfoDto dto : dtoList) {
+            entities.add(allInfoToEntity(dto));
         }
         return entities;
     }

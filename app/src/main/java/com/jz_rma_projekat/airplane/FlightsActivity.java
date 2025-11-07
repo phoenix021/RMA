@@ -42,20 +42,10 @@ import java.util.List;
 
             RecyclerView recyclerView = findViewById(R.id.recyclerViewFlights);
             recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-            // ViewModel initialization
             flightViewModel = new ViewModelProvider(this).get(FlightViewModel.class);
             flightAdapter = new FlightListAdapter();
             recyclerView.setAdapter(flightAdapter);
-            // Observe flight data
-            flightViewModel.getAllFlights().observe(this, flights -> {
-                if (flights != null && !flights.isEmpty()) {
-                    flightAdapter.submitList(flights);
-                    flightAdapter.notifyDataSetChanged();
-                } else {
-                    Toast.makeText(this, "No flights available", Toast.LENGTH_SHORT).show();
-                }
-            });
+
 
             flightAdapter.setOnFlightClickListener(flight -> {
                 // You can open a new activity, dialog, or show a Toast
@@ -66,9 +56,33 @@ import java.util.List;
                 Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
 
 
-                Intent intent = new Intent(FlightsActivity.this, FlightDetailsActivity.class);
-                intent.putExtra("flight", flight);
-                startActivity(intent);
+                Intent flightDetailsIntent = new Intent(FlightsActivity.this, FlightDetailsActivity.class);
+                flightDetailsIntent.putExtra("flight", flight);
+                startActivity(flightDetailsIntent);
             });
+
+            Intent intent = getIntent();
+            if (intent != null && intent.hasExtra("flights")) {
+                List<FlightEntity> flights =
+                        (List<FlightEntity>) intent.getSerializableExtra("flights");
+                if (flights != null && !flights.isEmpty()) {
+                    flightAdapter.submitList(flights);
+                    flightAdapter.notifyDataSetChanged();
+                } else {
+                    Toast.makeText(this, "No flights available", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                // Load all flights from DB
+                flightViewModel.getAllFlights().observe(this, flights -> {
+                    if (flights != null && !flights.isEmpty()) {
+                        flightAdapter.submitList(flights);
+                        flightAdapter.notifyDataSetChanged();
+                    }else {
+                        Toast.makeText(this, "No flights available", Toast.LENGTH_SHORT).show();
+
+                    }
+                });
+
         }
     }
+}

@@ -188,5 +188,57 @@ public class FlightRepository {
         return flightDao.getFlightById(id);
     }
 
+    public LiveData<List<FlightEntity>> searchFlightsString(String origin, String destination, String date) {
+            MutableLiveData<List<FlightEntity>> flightsLiveData = new MutableLiveData<>();
+
+            // Make API call
+            aviationStackApi.getFlightsByRoute(
+                    RetrofitClient.API_KEY,
+                    origin,
+                    destination
+            ).enqueue(new Callback<ApiResponse<FlightInfoDto>>() {
+                @Override
+                public void onResponse(Call<ApiResponse<FlightInfoDto>> call, Response<ApiResponse<FlightInfoDto>> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        List<FlightInfoDto> dtoList = response.body().getData();
+                        if (dtoList == null || dtoList.isEmpty()) {
+                            Log.w(TAG, "No flights found for given criteria.");
+                            flightsLiveData.postValue(Collections.emptyList());
+                            return;
+                        }
+
+                        // Convert DTOs to entities
+                        List<FlightEntity> flights = FlightMapper.allInfoDtoToEntityList(dtoList);
+
+                        // Save to database in background
+                        executor.execute(() -> {
+                            for (FlightEntity flight : flights) {
+                                Log.e("JELENA", "Added flight " + flight.getDepartureAirportId() + "->" + flight.getArrivalAirportId() + " flight to db");
+                                flightDao.insert(flight);
+                            }
+                            flightsLiveData.postValue(flights);
+                        });
+                    } else {
+                        Log.e(TAG, "JELENA API Response error: " + response.message());
+                        // fallback: get from local DB
+                        executor.execute(() -> {
+                            List<FlightEntity> cached = flightDao.searchFlightsSync(origin, destination, date);
+                            flightsLiveData.postValue(cached);
+                        });
+                    }
+                }
+                @Override
+                public void onFailure(Call<ApiResponse<FlightInfoDto>> call, Throwable t) {
+                    Log.e(TAG, "JELENA API call failed: " + t.getMessage());
+                    // fallback: use cached data
+                    executor.execute(() -> {
+                        List<FlightEntity> cached = flightDao.searchFlightsSync(origin, destination, date);
+                        flightsLiveData.postValue(cached);
+                    });
+                }
+            });
+
+        return flightsLiveData;
+    }
 }
 

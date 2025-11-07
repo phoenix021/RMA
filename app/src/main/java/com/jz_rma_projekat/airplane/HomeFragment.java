@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.jz_rma_projekat.airplane.ui.adapters.FlightListAdapter;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,7 +18,7 @@ import java.util.List;
 public class HomeFragment extends Fragment {
 
     private RecyclerView recyclerView;
-    private FlightsAdapter adapter;
+    private FlightListAdapter adapter;
 
     public HomeFragment() {}
 

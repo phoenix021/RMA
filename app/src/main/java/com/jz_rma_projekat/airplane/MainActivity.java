@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
     private AirportAutoCompleteAdapter airportautocompleteAdapter;
 
     private RecyclerView rvFlights;
-    private FlightsAdapter adapter;
+    private FlightListAdapter adapter;
     private FlightViewModel flightViewModel;
 
     private AppDatabase db;
@@ -190,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
         downloadBtn = findViewById(R.id.btnDownloadAirlines);
         downloadBtn.setOnClickListener(v -> Utils.saveAirlinesCsvToDownloads(getApplication()));
 
-        downloadAllBtn = findViewById(R.id.btnDownloadAll);
+        downloadAllBtn = findViewById(R.id.btnDownloadAllCsvs);
         downloadAllBtn.setOnClickListener(v -> Utils.downloadAllCsvs(getApplication()));
 
         //airplanesJsonBtn = findViewById(R.id.btnAirplanesJson);
@@ -219,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
                         searchDate = new Date(year, month, dayOfMonth);
                         String selectedDate = String.format(Locale.getDefault(), "%04d-%02d-%02d", year, month + 1, dayOfMonth);
                         etDate.setText(selectedDate);
-                        showFlightNotification("Selection date: ", selectedDate);
+                        //showFlightNotification("Selection date: ", selectedDate);
                     },
                     calendar.get(Calendar.YEAR),
                     calendar.get(Calendar.MONTH),
@@ -308,9 +308,19 @@ public class MainActivity extends AppCompatActivity {
         btnSearchFlights.setOnClickListener(v -> {
             String searchDate = etDate.getText().toString().trim();
 
-            if (searchOrigin == null || searchDestination == null || searchDate.isEmpty()) {
-                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
-                return;
+            if (searchOrigin == null || searchDestination == null) {
+                flightViewModel.searchFlightsString(etOrigin.getText().toString(), etDestination.getText().toString(), searchDate)
+                    .observe(this, flights -> {
+                        if (flights == null || flights.isEmpty()) {
+                            Toast.makeText(this, "No flights found", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Log.e("JELENA", "Found flights for the search parameters");
+
+                            Intent foundFlighsIntent = new Intent(this, FlightsActivity.class);
+                            foundFlighsIntent.putExtra("flights", new ArrayList<>(flights)); // ArrayList is Serializable
+                            startActivity(foundFlighsIntent);
+                        }
+                    });
             } else {
                 flightViewModel.searchFlights(searchOrigin, searchDestination, searchDate)
                         .observe(this, flights -> {

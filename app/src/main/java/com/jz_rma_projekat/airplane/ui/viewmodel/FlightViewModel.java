@@ -67,5 +67,9 @@ public class FlightViewModel extends AndroidViewModel {
     public LiveData<FlightEntity> getFlightById(long id) {
         return flightRepository.getFlightById(id);
     }
+
+    public LiveData<List<FlightEntity>> searchFlightsString(String searchOrigin, String searchDestination, String searchDate) {
+        return flightRepository.searchFlightsString(searchOrigin, searchDestination, searchDate);
+    }
 }
 

@@ -137,10 +137,16 @@
             android:text="Download Airlines CSV"/>
 
         <Button
-            android:id="@+id/btnDownloadAll"
+            android:id="@+id/btnDownloadAllCsvs"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Download Airlines CSV"/>
+            android:text="Download available CSVs"/>
+
+        <Button
+            android:id="@+id/btnDownloadAllJsons"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Download available JSONs"/>
 
         <!-- RecyclerView as default content -->
         <androidx.recyclerview.widget.RecyclerView
