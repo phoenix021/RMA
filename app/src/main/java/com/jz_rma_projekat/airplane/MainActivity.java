@@ -120,7 +120,6 @@ public class MainActivity extends AppCompatActivity {
 
     private AppDatabase db;
 
-    Button showAirlinesBtn;
     Button downloadBtn;
     Button shareAirlinesBtn;
     Button downloadAllBtn;
@@ -194,13 +193,6 @@ public class MainActivity extends AppCompatActivity {
         downloadAllBtn = findViewById(R.id.btnDownloadAll);
         downloadAllBtn.setOnClickListener(v -> Utils.downloadAllCsvs(getApplication()));
 
-
-        showAirlinesBtn =  findViewById(R.id.btnShowAirlines);
-        showAirlinesBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, AirlinesListActivity.class);
-            startActivity(intent);
-        });
-
         //airplanesJsonBtn = findViewById(R.id.btnAirplanesJson);
         //airplanesJsonBtn.setOnClickListener(v -> downloadAllCsvs());
 
@@ -255,12 +247,6 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-        Button btnViewAirports = findViewById(R.id.btnViewAirports);
-        btnViewAirports.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, AirportListActivity.class);
-            startActivity(intent);
-        });
-
         flightAdapter = new FlightListAdapter();
         // Initialize ViewModel
         flightViewModel = new ViewModelProvider(this).get(FlightViewModel.class);
@@ -287,12 +273,6 @@ public class MainActivity extends AppCompatActivity {
                     airportautocompleteAdapter.updateAllAirports(airports);
                 }
             }
-        });
-
-        Button btnViewFlights = findViewById(R.id.btnViewFlights);
-        btnViewFlights.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, FlightsActivity.class);
-            startActivity(intent);
         });
 
         etAirplanes = findViewById(R.id.airplanes);
