@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,6 +29,7 @@ public class FlightDetailsActivity extends AppCompatActivity {
     private TextView  tvArrivalAirport, tvArrivalGate;
 
     private Button btnShowAirlineDetails;
+    private Button btnShowAirportDetails;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -51,6 +53,7 @@ public class FlightDetailsActivity extends AppCompatActivity {
         tvAirline = findViewById(R.id.tvAirline);
 
         btnShowAirlineDetails = findViewById(R.id.btnShowAirlineDetails);
+        btnShowAirportDetails = findViewById(R.id.btnShowAirportDetails);
 
         // Get the FlightEntity passed from previous activity
         FlightEntity flight = (FlightEntity) getIntent().getSerializableExtra("flight");
@@ -88,7 +91,6 @@ public class FlightDetailsActivity extends AppCompatActivity {
         if (flight.getAirlineName() != null){
             btnShowAirlineDetails.setOnClickListener(v -> {
                 AirlineViewModel airportViewModel = new ViewModelProvider(this).get(AirlineViewModel.class);
-
                 // 4️⃣ Observe LiveData
                 airportViewModel.getAirlineByName(flight.getAirlineName()).observe(this, airline-> {
                     if (airline != null && !airline.getAirlineName().isEmpty()) {
@@ -96,6 +98,24 @@ public class FlightDetailsActivity extends AppCompatActivity {
                         intent.putExtra("airline", airline);
                         startActivity(intent);
                     }
+                });
+            });
+        }
+
+        if (flight.getDepartureIata() != null && !flight.getDepartureIata().isEmpty()){
+            btnShowAirportDetails.setOnClickListener(v -> {
+                AirportViewModel airportViewModel = new ViewModelProvider(this).get(AirportViewModel.class);
+                airportViewModel.getAirportByIataCode(flight.getDepartureIata()).observe(this, airport -> {
+                    if (airport != null ) {
+                        Log.e("JELENA", "airport found "+ airport.getIataCode());
+                        Intent intent = new Intent(this, AirportDetailsActivity.class);
+                        intent.putExtra("airport", airport);
+                        startActivity(intent);
+                    } else {
+                        Toast.makeText(this, "Airport details are not available at the moment", Toast.LENGTH_LONG).show();
+                        Log.e("JELENA", "airport not found "+ flight.getDepartureIata());
+                    }
+
                 });
             });
         }

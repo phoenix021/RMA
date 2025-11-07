@@ -97,4 +97,10 @@ public interface AirportDao {
 
     @Query("DELETE FROM airports")
     void deleteAll();
+
+    @Query("SELECT * FROM airports WHERE iataCode = :airportIataCode LIMIT 1")
+    LiveData<AirportEntity> getAirportByIataCode(String airportIataCode);
+
+    @Query("SELECT * FROM airports WHERE airportId = :airportId LIMIT 1")
+    LiveData<AirportEntity> getAirportById(String airportId);
 }

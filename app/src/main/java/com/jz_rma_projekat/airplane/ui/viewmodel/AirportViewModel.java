@@ -41,5 +41,13 @@ public class AirportViewModel extends AndroidViewModel {
     public void update(AirportEntity airport) {
         repository.update(airport);
     }
+
+    public LiveData<AirportEntity> getAirportByIataCode(String airportIataCode) {
+        return repository.getAirportByIataCode(airportIataCode);
+    }
+
+    public LiveData<AirportEntity> getAirportById(String airportId) {
+        return repository.getAirportById(airportId);
+    }
 }
 

@@ -115,4 +115,12 @@ public class AirportRepository {
     public void update(AirportEntity airport) {
         executorService.execute(() -> airportDao.update(airport));
     }
+
+    public LiveData<AirportEntity> getAirportByIataCode(String airportIataCode) {
+        return airportDao.getAirportByIataCode(airportIataCode);
+    }
+
+    public LiveData<AirportEntity> getAirportById(String airportId) {
+        return airportDao.getAirportById(airportId);
+    }
 }

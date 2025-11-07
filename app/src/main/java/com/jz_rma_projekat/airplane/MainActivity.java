@@ -16,6 +16,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.navigation.NavigationView;
 import com.jz_rma_projekat.airplane.utils.Utils;
 
 
@@ -44,6 +46,8 @@ import com.jz_rma_projekat.airplane.ui.viewmodel.FlightViewModel;
 
 //import androidx.core.app.ActivityCompat;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -54,6 +58,7 @@ import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -65,6 +70,8 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -134,6 +141,7 @@ public class MainActivity extends AppCompatActivity {
     private LocationCallback mLocationCallback;
     private LocationRequest mLocationRequest;
     private boolean mRequestingLocationUpdates = false;
+    DrawerLayout drawerLayout;
 
     private AirportListAdapter airportAdapter;
 
@@ -228,7 +236,24 @@ public class MainActivity extends AppCompatActivity {
             dialog.show();
         });
 
+        drawerLayout = findViewById(R.id.drawerLayout);
+        NavigationView navigationView = findViewById(R.id.navigationView);
 
+        // Navigation drawer menu click
+        navigationView.setNavigationItemSelectedListener(item -> {
+            int id = item.getItemId();
+
+            if (id == R.id.nav_airlines) {
+                startActivity(new Intent(this, AirlinesListActivity.class));
+            } else if (id == R.id.nav_airports) {
+                startActivity(new Intent(this, AirportListActivity.class));
+            } else if (id == R.id.nav_flights) {
+                startActivity(new Intent(this, FlightsActivity.class));
+            }
+
+            drawerLayout.closeDrawers();
+            return true;
+        });
 
         Button btnViewAirports = findViewById(R.id.btnViewAirports);
         btnViewAirports.setOnClickListener(v -> {
@@ -317,9 +342,6 @@ public class MainActivity extends AppCompatActivity {
                         });
             }
         });
-
-
-
 
 
         //mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
