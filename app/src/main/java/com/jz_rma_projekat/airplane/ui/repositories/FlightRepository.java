@@ -213,7 +213,6 @@ public class FlightRepository {
                         // Save to database in background
                         executor.execute(() -> {
                             for (FlightEntity flight : flights) {
-                                Log.e("JELENA", "Added flight " + flight.getDepartureAirportId() + "->" + flight.getArrivalAirportId() + " flight to db");
                                 flightDao.insert(flight);
                             }
                             flightsLiveData.postValue(flights);

@@ -38,6 +38,7 @@
         <activity android:name=".AirportDetailsActivity" />
         <activity android:name=".AirlinesListActivity" />
         <activity android:name=".AirlineDetailsActivity" />
+        <activity android:name=".DatasetActivity" />
 
 
 

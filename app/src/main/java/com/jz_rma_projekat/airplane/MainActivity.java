@@ -69,7 +69,6 @@ import android.widget.Toast;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.lifecycle.LiveData;
@@ -82,11 +81,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import retrofit2.Call;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -115,25 +109,15 @@ public class MainActivity extends AppCompatActivity {
     private AirportAutoCompleteAdapter airportautocompleteAdapter;
 
     private RecyclerView rvFlights;
-    private FlightListAdapter adapter;
     private FlightViewModel flightViewModel;
-
-    private AppDatabase db;
-
-    Button downloadBtn;
-    Button shareAirlinesBtn;
-    Button downloadAllBtn;
 
     AutoCompleteTextView etCountry ;
     AutoCompleteTextView etOrigin ;
     AutoCompleteTextView etDestination;
     AutoCompleteTextView etAirplanes;
-
-    ArrayList<AirportDto> airportList = new ArrayList<>();
     EditText etDate;
     Button btnSearchFlights;
 
-    private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
 
     private FusedLocationProviderClient mFusedLocationClient;
@@ -149,6 +133,8 @@ public class MainActivity extends AppCompatActivity {
     AirportEntity searchOrigin;
     AirportEntity searchDestination;
     Date searchDate;
+
+    private AppBarConfiguration appBarConfiguration;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -183,18 +169,6 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
-
-        shareAirlinesBtn = findViewById(R.id.btnShareAirlines);
-        shareAirlinesBtn.setOnClickListener(v -> Utils.shareAirlinesCsv(getApplication()));
-
-        downloadBtn = findViewById(R.id.btnDownloadAirlines);
-        downloadBtn.setOnClickListener(v -> Utils.saveAirlinesCsvToDownloads(getApplication()));
-
-        downloadAllBtn = findViewById(R.id.btnDownloadAllCsvs);
-        downloadAllBtn.setOnClickListener(v -> Utils.downloadAllCsvs(getApplication()));
-
-        //airplanesJsonBtn = findViewById(R.id.btnAirplanesJson);
-        //airplanesJsonBtn.setOnClickListener(v -> downloadAllCsvs());
 
 
         // Only add the fragment if this is the first creation
@@ -241,6 +215,8 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(this, AirportListActivity.class));
             } else if (id == R.id.nav_flights) {
                 startActivity(new Intent(this, FlightsActivity.class));
+            }  else if (id == R.id.nav_data) {
+                startActivity(new Intent(this, DatasetActivity.class));
             }
 
             drawerLayout.closeDrawers();
@@ -555,51 +531,6 @@ public class MainActivity extends AppCompatActivity {
         return (networkInfo != null && networkInfo.isConnected());
     }
 
-
-    private File csvFile;
-
-    private void initCsvFile() {
-        csvFile = new File(getExternalFilesDir(null), "airports.csv");
-        try (FileWriter writer = new FileWriter(csvFile)) {
-            // Write header once
-            writer.append("iata_code,name,city,country,latitude,longitude\n");
-            writer.flush();
-            Log.d("Airport CSV", "CSV file initialized at: " + csvFile.getAbsolutePath());
-        } catch (IOException e) {
-            Log.e("Airport CSV", "Error initializing CSV", e);
-        }
-    }
-
-    private void appendAirportsToCsv(List<AirportDto> airports) {
-        try (FileWriter writer = new FileWriter(csvFile, true)) { // true = append mode
-            for (AirportDto airport : airports) {
-                // IATA Code
-                writer.append(airport.getIataCode() != null ? airport.getIataCode() : "N/A").append(",");
-
-                // Name (replacing commas with spaces)
-                writer.append(airport.getName() != null ? airport.getName().replace(",", " ") : "N/A").append(",");
-
-                // City (currently a placeholder, to be updated)
-                //String city = airport.getCity() != null ? airport.getCity().replace(",", " ") : "N/A";
-                //writer.append(city).append(",");
-
-                // Country (replacing commas with spaces)
-                writer.append(airport.getCountry() != null ? airport.getCountry().replace(",", " ") : "N/A").append(",");
-
-                // Latitude (to be updated, currently empty string replaced with N/A)
-                //String latitude = airport.getLatitude() != null ? String.valueOf(airport.getLatitude()) : "N/A";
-                //writer.append(latitude).append(",");
-
-                // Longitude (to be updated, currently empty string replaced with N/A)
-                //String longitude = airport.getLongitude() != null ? String.valueOf(airport.getLongitude()) : "N/A";
-                //writer.append(longitude).append("\n");
-            }
-            writer.flush();
-            Log.d("Airport CSV", "Appended " + airports.size() + " airports to CSV.");
-        } catch (IOException e) {
-            Log.e("Airport CSV", "Error appending to CSV", e);
-        }
-    }
 
     public void sendIntentToGoogleMaps(){
         double latitude = 37.7749;
