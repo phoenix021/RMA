@@ -84,5 +84,4 @@ public class DatasetActivity extends AppCompatActivity {
             Log.e("Airport CSV", "Error appending to CSV", e);
         }
     }
-
 }

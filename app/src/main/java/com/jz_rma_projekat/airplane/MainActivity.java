@@ -98,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
      private static final String DEBUG_TAG = "MainActivity";
 
     private static final int REQUEST_WRITE_STORAGE_PERMISSION = 1;
+    private static final int REQUEST_READ_STORAGE_PERMISSION = 2;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
     private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 1002;
 
@@ -153,6 +154,11 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     REQUEST_WRITE_STORAGE_PERMISSION);
+        }
+
+        if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_READ_STORAGE_PERMISSION);
         }
 
         //setSupportActionBar(binding.toolbar);
@@ -494,7 +500,15 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 Toast.makeText(this, "Notification permission denied.", Toast.LENGTH_SHORT).show();
             }
+        } if (requestCode == REQUEST_READ_STORAGE_PERMISSION){
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // User granted permission → you can safely send the notification now
+                showFlightNotification("Flight tracker", " Read from storage enabled✈️");
+            } else {
+                Toast.makeText(this, "Notification permission denied.", Toast.LENGTH_SHORT).show();
+            }
         }
+
     }
     @Override
     protected void onPause() {

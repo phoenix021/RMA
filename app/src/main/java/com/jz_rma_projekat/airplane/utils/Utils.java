@@ -140,27 +140,36 @@ public class Utils {
     }
 
     public static void shareAirlinesCsv(Application application) {
-        File csvFile = new File(application.getExternalFilesDir(null), "airlines.csv");
+        //File csvFile = new File(application.getExternalFilesDir(null), "airlines.csv");
 
-        if (!csvFile.exists()) {
-            Toast.makeText(application.getApplicationContext(), "CSV file not found!", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        //if (!csvFile.exists()) {
+        //    Toast.makeText(application.getApplicationContext(), "CSV file not found!", Toast.LENGTH_SHORT).show();
+        //    return;
+        //}
 
-        Uri fileUri = FileProvider.getUriForFile(
+        File file = new File(application.getExternalFilesDir(null), "airlines.csv");
+
+        Uri uri = FileProvider.getUriForFile(
                 application.getApplicationContext(),
                 application.getPackageName() + ".provider",
-                csvFile
+                file
         );
 
+        Log.d("ShareURI", uri.toString());
+        Log.d("ShareFile", file.getAbsolutePath());
         Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("text/csv");
-        intent.putExtra(Intent.EXTRA_STREAM, fileUri);
+        intent.setType("text/csv"); // MIME type (use "application/json" or others as needed)
+        intent.putExtra(Intent.EXTRA_STREAM, uri);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (intent.resolveActivity(application.getPackageManager()) != null) {
+            application.startActivity(intent);
+        } else {
+            Log.e("Flights Tracker", "Share option is currently unavailable");
+        }
 
-        application.startActivity(Intent.createChooser(intent, "Download or share CSV"));
+        //application.startActivity(Intent.createChooser(intent, "Share CSV using")); }
     }
-
     public static void saveAirlinesCsvToDownloads(Application application) {
         File csvFile = new File(application.getExternalFilesDir(null), "airlines.csv");
 
