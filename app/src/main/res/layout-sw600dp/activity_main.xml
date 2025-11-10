@@ -8,153 +8,134 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    tools:context=".MainActivity">
-
-    <!-- AppBar / Toolbar -->
-    <com.google.android.material.appbar.AppBarLayout
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:fitsSystemWindows="true">
 
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar"
+
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            app:title="Flight List"
-            app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light" />
-    </com.google.android.material.appbar.AppBarLayout>
-
-    <!-- Main content container -->
-    <LinearLayout
-        android:id="@+id/main_content_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:padding="24dp"
-        android:weightSum="1">
-
-        <!-- Left side: Form fields for search criteria -->
-        <LinearLayout
-            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="0.4"
-            android:orientation="vertical"
-            android:paddingEnd="24dp"
-            android:paddingStart="24dp">
+            android:padding="24dp">
 
-            <TextView
-                android:id="@+id/tvWelcome"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Welcome to Flight Tracker ✈️"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="32dp" />
 
-            <AutoCompleteTextView
-                android:id="@+id/etCountry"
+
+            <!-- Main content container -->
+            <LinearLayout
+                android:id="@+id/main_content_container"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Select Country"
-                android:inputType="text"
-                android:padding="12dp"
-                android:layout_marginBottom="16dp" />
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-            <AutoCompleteTextView
-                android:id="@+id/airplanes"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Airplanes"
-                android:inputType="text"
-                android:padding="12dp"
-                android:layout_marginBottom="16dp" />
+                <!-- Welcome -->
+                <TextView
+                    android:id="@+id/tvWelcome"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Welcome to Flight Tracker ✈️"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="32dp" />
 
-            <AutoCompleteTextView
-                android:id="@+id/etOrigin"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Origin Airport"
-                android:inputType="text"
-                android:padding="12dp"
-                android:layout_marginBottom="16dp" />
+                <!-- Origin Airport -->
+                <AutoCompleteTextView
+                    android:id="@+id/etOrigin"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Origin Airport"
+                    android:inputType="text"
+                    android:padding="12dp"
+                    android:layout_marginBottom="16dp"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:dropDownHeight="200dp"
+                    android:dropDownWidth="match_parent"
+                    android:completionThreshold="1"/>
 
-            <AutoCompleteTextView
-                android:id="@+id/etDestination"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Destination Airport"
-                android:inputType="text"
-                android:padding="12dp"
-                android:layout_marginBottom="16dp" />
+                <AutoCompleteTextView
+                    android:id="@+id/etDestination"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Destination Airport"
+                    android:inputType="text"
+                    android:padding="12dp"
+                    android:layout_marginBottom="16dp"
+                    android:completionThreshold="1"/>
 
-            <EditText
-                android:id="@+id/etDate"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Select Date"
-                android:focusable="false"
-                android:inputType="none"
-                android:padding="12dp"
-                android:layout_marginBottom="24dp" />
+                <!-- Date -->
+                <EditText
+                    android:id="@+id/etDate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Select Date"
+                    android:focusable="false"
+                    android:inputType="none"
+                    android:padding="12dp"
+                    android:layout_marginBottom="24dp" />
 
-            <Button
-                android:id="@+id/btnSearchFlights"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Search Flights"
-                android:backgroundTint="@color/purple_500"
-                android:textColor="@android:color/white"
-                android:padding="12dp" />
+                <!-- Search Button -->
+                <Button
+                    android:id="@+id/btnSearchFlights"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Search Flights"
+                    android:backgroundTint="@color/purple_500"
+                    android:textColor="@android:color/white"
+                    android:padding="12dp" />
 
-            <!-- Optional: Share/Download buttons -->
-            <Button
-                android:id="@+id/btnShareAirlines"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Share Airlines CSV"/>
+                <AutoCompleteTextView
+                    android:id="@+id/etCountry"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Select Country"
+                    android:inputType="text"
+                    android:padding="12dp"
+                    android:layout_marginBottom="16dp"
+                    android:completionThreshold="1"/>
 
-            <Button
-                android:id="@+id/btnDownloadAirlines"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Download Airlines CSV"/>
 
-            <Button
-                android:id="@+id/btnDownloadAll"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Download Airlines CSV"/>
-        </LinearLayout>
+                <AutoCompleteTextView
+                    android:id="@+id/airplanes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Airplanes"
+                    android:inputType="text"
+                    android:padding="12dp"
+                    android:layout_marginBottom="16dp"
+                    android:completionThreshold="1"/>
 
-        <!-- Right side: RecyclerView for Flight List -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvFlights"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="0.6" />
-    </LinearLayout>
+                <!-- RecyclerView as default content -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvFlights"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
 
-    <!-- Floating Action Button -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:contentDescription="Add"
-        app:srcCompat="@android:drawable/ic_dialog_email" />
+                <!-- Fragment container (initially hidden) -->
+                <FrameLayout
+                    android:id="@+id/fragment_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="gone" />
+            </LinearLayout>
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+        </ScrollView>
+
+        <!-- Floating Action Button -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="16dp"
+            android:contentDescription="Add"
+            app:srcCompat="@android:drawable/ic_dialog_info" />
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <!-- Navigation Drawer -->
-<com.google.android.material.navigation.NavigationView
+    <com.google.android.material.navigation.NavigationView
         android:id="@+id/navigationView"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"

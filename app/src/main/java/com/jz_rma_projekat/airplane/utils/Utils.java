@@ -16,11 +16,15 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
+import com.google.gson.Gson;
+import com.google.gson.stream.JsonWriter;
 import com.jz_rma_projekat.airplane.database.AppDatabase;
 import com.jz_rma_projekat.airplane.database.api_models.AirlineResponse;
 import com.jz_rma_projekat.airplane.database.dao.AirlineDao;
 import com.jz_rma_projekat.airplane.database.dto.AirlineDto;
 import com.jz_rma_projekat.airplane.database.entities.AirlineEntity;
+import com.jz_rma_projekat.airplane.database.entities.AirportEntity;
+import com.jz_rma_projekat.airplane.database.entities.FlightEntity;
 import com.jz_rma_projekat.airplane.network.AviationStackApi;
 import com.jz_rma_projekat.airplane.network.RetrofitClient;
 import com.jz_rma_projekat.airplane.utils.mappers.AirlineMapper;
@@ -43,110 +47,181 @@ import retrofit2.Response;
 // Based on API restrictions this Uclass tils is introduced
 public class Utils {
 
-    public static void fetchAndSaveAllAirlines(Application application) {
-        AviationStackApi api = RetrofitClient.getApi();
-        Log.d("Airline API", "Starting airline fetch from offset 0");
-        fetchAirlinesPage(application, api, 0); // start from offset 0
+    public static File getAirlinesCsvFile(Application app) {
+        return new File(app.getExternalFilesDir(null), "airlines.csv");
     }
 
-    // Recursive async function to fetch pages
-       public static void fetchAirlinesPage(Application application, AviationStackApi api, int offset) {
-        Call<AirlineResponse> call = api.getAirlines("07d66aaa5c32f0546552c090cd95403f", 100, offset);
-
-        call.enqueue(new Callback<AirlineResponse>() {
-            @Override
-            public void onResponse(Call<AirlineResponse> call, Response<AirlineResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    AirlineResponse data = response.body();
-                    List<AirlineDto> airlines = data.getData();
-                    int total = data.getPagination().getTotal();
-
-                    if (airlines != null && !airlines.isEmpty()) {
-                        saveAirlinesToDatabase(application, airlines);  // Save to Room Database
-                        Log.d("Airline API", "Saved " + airlines.size() +
-                                " airlines (offset=" + offset + ")");
-                        appendAirlinesToCsv(application, airlines);
-                        appendJsonToExternalStorage(application, response.body().toString());
-                    }
-
-                    // Continue fetching the next page
-                    //int nextOffset = offset + 100;
-                    int nextOffset = offset + 1000; // just fot development purposes because of the api limits are invalved, return to 100 for prod
-                    if (nextOffset < total) {
-                        fetchAirlinesPage(application, api, nextOffset); // recursive async call
-                    } else {
-                        Log.d("Airline API", "✅ All airlines fetched!");
-                        closeJsonArray();
-                        //AirlineDao dao = db.airlineDao();
-                        //List<AirlineEntity> entities = dao.getAllAirlines();
-                        //List<AirlineDto> allAirlines = AirlineMapper.toDtoList(entities);
-                    }
-
-                } else {
-                    Log.e("Airline API", "❌ Response unsuccessful. Code: " + response.code());
-                }
-            }
-
-            @Override
-            public void onFailure(Call<AirlineResponse> call, Throwable t) {
-                Log.e("Airline API", "❌ Request failed: " + t.getMessage());
-                // TODO: make some tost or something
-            }
-        });
+    public static File getAirportsCsvFile(Application app) {
+        return new File(app.getExternalFilesDir(null), "airports.csv");
     }
 
-    public static void saveAirlinesToDatabase(Application application, List<AirlineDto> airlineDtos) {
-        // Convert List<AirlineDto> to List<AirlineEntity> using the AirlineMapper
-        List<AirlineEntity> airlineEntities = AirlineMapper.toEntityList(airlineDtos);
-
-        // Insert into the database asynchronously
-        new Thread(() -> {
-            AppDatabase db = AppDatabase.getInstance(application.getApplicationContext());
-            AirlineDao dao = db.airlineDao();
-            dao.insertAirlines(airlineEntities);
-        }).start();
+    public static File getFlightsCsvFile(Application app) {
+        return new File(app.getExternalFilesDir(null), "airports.csv");
     }
 
-    public static void appendAirlinesToCsv(Application application, List<AirlineDto> airlines) {
-        File csvFile = new File(application.getExternalFilesDir(null), "airlines.csv");
+    public static void appendAirlinesToCsvFile(Application app, List<AirlineEntity> airlines) {
+        File csvFile = getAirlinesCsvFile(app);
+        boolean exists = csvFile.exists();
 
         try (FileWriter fw = new FileWriter(csvFile, true);
              BufferedWriter bw = new BufferedWriter(fw)) {
 
-            for (AirlineDto a : airlines) {
+            // write header only once
+            if (!exists) {
+                bw.write("AirlineId,AirlineName,IATACode,ICAOCode,Callsign,HubCode,CountryISO2,CountryName,DateFounded,FleetSize,FleetAverageAge,Status,Type,IATAPrefixAccounting");
+                bw.newLine();
+            }
+
+            for (AirlineEntity a : airlines) {
                 String line = String.join(",",
-                        a.getAirlineId(),
-                        a.getAirlineName(),
-                        a.getIataCode(),
-                        a.getIcaoCode(),
-                        a.getCallsign(),
-                        a.getHubCode(),
-                        a.getCountryIso2(),
-                        a.getCountryName(),
-                        a.getDateFounded(),
-                        a.getFleetSize(),
-                        a.getFleetAverageAge(),
-                        a.getStatus(),
-                        a.getType(),
-                        a.getIataPrefixAccounting()
+                        safe(a.getAirlineId()), safe(a.getAirlineName()), safe(a.getIataCode()),
+                        safe(a.getIcaoCode()), safe(a.getCallsign()), safe(a.getHubCode()),
+                        safe(a.getCountryIso2()), safe(a.getCountryName()), safe(a.getDateFounded()),
+                        safe(a.getFleetSize()), safe(a.getFleetAverageAge()), safe(a.getStatus()),
+                        safe(a.getType()), safe(a.getIataPrefixAccounting())
                 );
                 bw.write(line);
                 bw.newLine();
             }
 
         } catch (IOException e) {
+            Log.e("Utils", "Error writing CSV", e);
+        }
+    }
+
+    private static String safe(String s) {
+        return s == null ? "N/A" : s.replace(",", " "); // prevent CSV break
+    }
+
+    public static void appendAirportsToCsvFile(Application app, List<AirportEntity> airports) {
+        File csvFile = getAirportsCsvFile(app);
+        boolean exists = csvFile.exists();
+
+        try (FileWriter fw = new FileWriter(csvFile, true);
+             BufferedWriter bw = new BufferedWriter(fw)) {
+
+            if (!exists) {
+                bw.write("AirportId,AirportGmt,AirportId2, " +
+                        "AirportIataCode,AirportCityIataCode," +
+                        "AirportIcaoCode,CountryIso2,GeonameId,Latitude," +
+                        "Longitude,Name,Country," +
+                        "PhoneNumber,Timezone");
+                bw.newLine();
+            }
+
+            for (AirportEntity entity : airports) {
+                String line = String.join(",",
+                        safe(entity.getId()),
+                        safe(entity.getGmt()),
+                        safe(entity.getAirportId() + ""),
+                        safe(entity.getIataCode()),
+                        safe(entity.getCityIataCode()),
+                        safe(entity.getIcaoCode()),
+                        safe(entity.getCountryIso2()),
+                        safe(entity.getGeonameId() + ""),
+                        safe(entity.getLatitude() + ""),
+                        safe(entity.getLongitude() + ""),
+                        safe(entity.getName()),
+                        safe( entity.getCountry()),
+                        safe( entity.getPhoneNumber()),
+                        safe(entity.getTimezone())
+                );
+                bw.write(line);
+                bw.newLine();
+            }
+
+        } catch (IOException e) {
+            Log.e("Utils", "Error writing CSV", e);
+        }
+    }
+
+    public static void appendFlightsToCsvFile(Application app, List<FlightEntity> flights) {
+        File csvFile = getFlightsCsvFile(app);
+        boolean exists = csvFile.exists();
+
+        try (FileWriter fw = new FileWriter(csvFile, true);
+             BufferedWriter bw = new BufferedWriter(fw)) {
+
+            if (!exists) {
+                bw.write("FlightId,ArrivalAirportId,ArrivalStatus,ArrivalAirport, " +
+                        "AirlineName,AirlineAiata," +
+                        "AirlineIcao,ArrivalGate,ArrivalIata,ArrivalTerminal," +
+                        "ArrivalIcao,ArrivalScheduled,ArrivalTime," +
+                        "DepartureAirport,DepartureAirportId," +
+                        "DeartureGate, DepartureIcao, DepartureIata," +
+                        "De[artireScheduled, DepartureTerminal, DepartureTime");
+                bw.newLine();
+            }
+
+            for (FlightEntity entity : flights) {
+                String line = String.join(",",
+                        safe(entity.getId()+""),
+                        safe(entity.getArrivalAirportId()),
+                        safe(entity.getStatus()),
+                        safe(entity.getArrivalAirport()),
+                        safe(entity.getAirlineName()),
+                        safe(entity.getAirlineIata()),
+                        safe(entity.getAirlineIcao()),
+                        safe(entity.getArrivalGate()),
+                        safe(entity.getArrivalIata()),
+                        safe(entity.getArrivalTerminal()),
+                        safe(entity.getArrivalIcao()),
+                        safe(entity.getArrivalScheduled()),
+                        safe(entity.getArrivalTime()),
+                        safe(entity.getDepartureAirport()),
+                        safe(entity.getDepartureAirportId()),
+                        safe(entity.getDepartureGate()),
+                        safe(entity.getDepartureIcao()),
+                        safe(entity.getDepartureIata()),
+                        safe(entity.getDepartureIcao()),
+                        safe(entity.getDepartureScheduled()),
+                        safe(entity.getDepartureTerminal()),
+                        safe(entity.getDepartureTime())
+                );
+                bw.write(line);
+                bw.newLine();
+            }
+
+        } catch (IOException e) {
+            Log.e("Utils", "Error writing CSV", e);
+        }
+    }
+
+
+
+    public static void appendAirlinesToJson(Application app, List<AirlineEntity> airlines) {
+        File jsonFile = new File(app.getExternalFilesDir(null), "airlines.json");
+        boolean exists = jsonFile.exists();
+
+        try (FileWriter fw = new FileWriter(jsonFile, true);
+             JsonWriter writer = new JsonWriter(fw)) {
+
+            if (!exists) {
+                fw.write("[");
+            } else {
+                fw.write(",");
+            }
+
+            Gson gson = new Gson();
+            for (AirlineEntity airline : airlines) {
+                gson.toJson(airline, AirlineEntity.class, writer);
+            }
+
+        } catch (IOException e) {
+            Log.e("Utils", "Error writing JSON", e);
+        }
+    }
+
+    public static void finalizeJson(Application app) {
+        File jsonFile = new File(app.getExternalFilesDir(null), "airlines.json");
+        try (FileWriter fw = new FileWriter(jsonFile, true)) {
+            fw.write("]");
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public static void shareAirlinesCsv(Application application) {
-        //File csvFile = new File(application.getExternalFilesDir(null), "airlines.csv");
-
-        //if (!csvFile.exists()) {
-        //    Toast.makeText(application.getApplicationContext(), "CSV file not found!", Toast.LENGTH_SHORT).show();
-        //    return;
-        //}
-
         File file = new File(application.getExternalFilesDir(null), "airlines.csv");
 
         Uri uri = FileProvider.getUriForFile(
@@ -168,7 +243,6 @@ public class Utils {
             Log.e("Flights Tracker", "Share option is currently unavailable");
         }
 
-        //application.startActivity(Intent.createChooser(intent, "Share CSV using")); }
     }
     public static void saveAirlinesCsvToDownloads(Application application) {
         File csvFile = new File(application.getExternalFilesDir(null), "airlines.csv");
@@ -247,13 +321,13 @@ public class Utils {
     public static void downloadAllCsvs(Application application) {
         File airportsCsv = new File(application.getExternalFilesDir(null), "airports.csv");
         File airlinesCsv = new File(application.getExternalFilesDir(null), "airlines.csv");
+        File flightsCsv = new File(application.getExternalFilesDir(null), "flights.csv");
 
         copyCsvToDownloads(application, airportsCsv, "airports.csv");
         copyCsvToDownloads(application, airlinesCsv, "airlines.csv");
+        copyCsvToDownloads(application, flightsCsv, "flights.csv");
     }
 
-
-    private static final int REQUEST_WRITE_STORAGE_PERMISSION = 1;
     private static void saveAirlinesJsonToExternalStorage(Application application, String jsonResponse) {
         // Check if the permission is granted
         if (ContextCompat.checkSelfPermission(application.getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -323,7 +397,4 @@ public class Utils {
             Log.e("Airline API", "Error closing JSON array", e);
         }
     }
-
-
-
 }

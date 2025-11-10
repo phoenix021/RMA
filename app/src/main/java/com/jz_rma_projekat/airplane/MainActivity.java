@@ -26,39 +26,25 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.jz_rma_projekat.airplane.database.AppDatabase;
-import com.jz_rma_projekat.airplane.database.api_models.AirlineResponse;
-import com.jz_rma_projekat.airplane.database.dao.AirlineDao;
-import com.jz_rma_projekat.airplane.database.dto.AirlineDto;
-import com.jz_rma_projekat.airplane.database.dto.AirportDto;
 import com.jz_rma_projekat.airplane.database.entities.AirlineEntity;
 import com.jz_rma_projekat.airplane.databinding.ActivityMainBinding;
 import com.jz_rma_projekat.airplane.database.entities.AirportEntity;
-import com.jz_rma_projekat.airplane.network.AviationStackApi;
-import com.jz_rma_projekat.airplane.network.RetrofitClient;
 import com.jz_rma_projekat.airplane.ui.adapters.AirportAutoCompleteAdapter;
 import com.jz_rma_projekat.airplane.ui.adapters.AirportListAdapter;
 import com.jz_rma_projekat.airplane.ui.adapters.FlightListAdapter;
 import com.jz_rma_projekat.airplane.ui.viewmodel.AirlineViewModel;
 import com.jz_rma_projekat.airplane.ui.viewmodel.AirportViewModel;
-import com.jz_rma_projekat.airplane.utils.mappers.AirlineMapper;
 import com.jz_rma_projekat.airplane.ui.viewmodel.FlightViewModel;
 
-//import androidx.core.app.ActivityCompat;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 
-import android.os.Environment;
 import android.os.Looper;
-import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -69,9 +55,7 @@ import android.widget.Toast;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -79,19 +63,12 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.RecyclerView;
 
-import retrofit2.Call;
-
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
-
-import retrofit2.Callback;
-import retrofit2.Response;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -160,12 +137,6 @@ public class MainActivity extends AppCompatActivity {
                 != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_READ_STORAGE_PERMISSION);
         }
-
-        //setSupportActionBar(binding.toolbar);
-
-        //NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        //appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
-        //NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
         binding.fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -498,14 +469,14 @@ public class MainActivity extends AppCompatActivity {
                 // User granted permission → you can safely send the notification now
                 showFlightNotification("Flight Updates Enabled", "You will now receive flight alerts ✈️");
             } else {
-                Toast.makeText(this, "Notification permission denied.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Notifications for fligh alerts are denied.", Toast.LENGTH_SHORT).show();
             }
         } if (requestCode == REQUEST_READ_STORAGE_PERMISSION){
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // User granted permission → you can safely send the notification now
                 showFlightNotification("Flight tracker", " Read from storage enabled✈️");
             } else {
-                Toast.makeText(this, "Notification permission denied.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Notification permission denied for reading storage device.", Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -546,26 +517,4 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void sendIntentToGoogleMaps(){
-        double latitude = 37.7749;
-        double longitude = -122.4194;
-
-        String flightName = "Flight ABC123";
-        String uri = "geo:" + latitude + "," + longitude + "?q=" + latitude + "," + longitude + "(" + Uri.encode(flightName) + ")";
-
-        //String uri = "geo:" + latitude + "," + longitude + "?q=" + latitude + "," + longitude + "(Flight+Location)";
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
-        intent.setPackage("com.google.android.apps.maps");
-        if (intent.resolveActivity(getPackageManager()) != null) {
-            startActivity(intent);
-        } else {
-            Log.e("MainActivity", "Can not resolve activity google maps");
-        }
-    }
-    @Override
-    public boolean onSupportNavigateUp() {
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        return NavigationUI.navigateUp(navController, appBarConfiguration)
-                || super.onSupportNavigateUp();
-    }
 }

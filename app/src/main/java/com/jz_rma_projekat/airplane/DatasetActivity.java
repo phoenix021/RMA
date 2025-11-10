@@ -1,25 +1,51 @@
 package com.jz_rma_projekat.airplane;
 
+import android.Manifest;
+import android.app.Application;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.jz_rma_projekat.airplane.database.dto.AirportDto;
+import com.jz_rma_projekat.airplane.ui.viewmodel.AirlineViewModel;
+import com.jz_rma_projekat.airplane.ui.viewmodel.AirportViewModel;
+import com.jz_rma_projekat.airplane.ui.viewmodel.FlightViewModel;
 import com.jz_rma_projekat.airplane.utils.Utils;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DatasetActivity extends AppCompatActivity {
 
-    Button downloadBtn;
+    Button downloadAirlinesBtn;
+
+    Button downloadAirportsBtn;
+    Button downloadFlightsBtn;
+
+
     Button shareAirlinesBtn;
     Button downloadAllBtn;
+
+    AirportViewModel airportViewModel;
+    AirlineViewModel airlineViewModel;
+
+    private FlightViewModel flightViewModel;
 
     private File csvFile;
 
@@ -29,59 +55,126 @@ public class DatasetActivity extends AppCompatActivity {
         setContentView(R.layout.activity_dataset);
 
         shareAirlinesBtn = findViewById(R.id.btnShareAirlines);
-        shareAirlinesBtn.setOnClickListener(v -> Utils.shareAirlinesCsv(getApplication()));
+        shareAirlinesBtn.setOnClickListener(v -> {
+            Utils.shareAirlinesCsv(getApplication());
+            showFlightNotification("FlightTracker", "Download complete");
+        });
 
-        downloadBtn = findViewById(R.id.btnDownloadAirlines);
-        downloadBtn.setOnClickListener(v -> Utils.saveAirlinesCsvToDownloads(getApplication()));
+        downloadAirlinesBtn = findViewById(R.id.btnDownloadAirlines);
+        downloadAirlinesBtn.setOnClickListener(v -> {
+            showAirlinesCsvPreview();
+            showFlightNotification("FlightTracker", "Download complete");
+        });
+        downloadAirportsBtn = findViewById(R.id.btnDownloadAirports);
+        downloadAirportsBtn.setOnClickListener(v -> {
+            showAirportsCsvPreview();});
+
+        downloadFlightsBtn = findViewById(R.id.btnDownloadFlights);
+        downloadFlightsBtn.setOnClickListener(v -> {
+            showFlightsCsvPreview();
+            showFlightNotification("FlightTracker", "Download complete");
+        });
+
 
         downloadAllBtn = findViewById(R.id.btnDownloadAllCsvs);
-        downloadAllBtn.setOnClickListener(v -> Utils.downloadAllCsvs(getApplication()));
+        downloadAllBtn.setOnClickListener(v -> {Utils.downloadAllCsvs(getApplication());
+            showFlightNotification("FlightTracker", "Downloads complete");
+        });
 
-        //airplanesJsonBtn = findViewById(R.id.btnAirplanesJson);
-        //airplanesJsonBtn.setOnClickListener(v -> downloadAllCsvs());
-    }
+        airportViewModel = new ViewModelProvider(this).get(AirportViewModel.class);
 
-
-    private void initCsvFile() {
-        csvFile = new File(getExternalFilesDir(null), "airports.csv");
-        try (FileWriter writer = new FileWriter(csvFile)) {
-            // Write header once
-            writer.append("iata_code,name,city,country,latitude,longitude\n");
-            writer.flush();
-            Log.d("Airport CSV", "CSV file initialized at: " + csvFile.getAbsolutePath());
-        } catch (IOException e) {
-            Log.e("Airport CSV", "Error initializing CSV", e);
-        }
-    }
-
-    private void appendAirportsToCsv(List<AirportDto> airports) {
-        try (FileWriter writer = new FileWriter(csvFile, true)) { // true = append mode
-            for (AirportDto airport : airports) {
-                // IATA Code
-                writer.append(airport.getIataCode() != null ? airport.getIataCode() : "N/A").append(",");
-
-                // Name (replacing commas with spaces)
-                writer.append(airport.getName() != null ? airport.getName().replace(",", " ") : "N/A").append(",");
-
-                // City (currently a placeholder, to be updated)
-                //String city = airport.getCity() != null ? airport.getCity().replace(",", " ") : "N/A";
-                //writer.append(city).append(",");
-
-                // Country (replacing commas with spaces)
-                writer.append(airport.getCountry() != null ? airport.getCountry().replace(",", " ") : "N/A").append(",");
-
-                // Latitude (to be updated, currently empty string replaced with N/A)
-                //String latitude = airport.getLatitude() != null ? String.valueOf(airport.getLatitude()) : "N/A";
-                //writer.append(latitude).append(",");
-
-                // Longitude (to be updated, currently empty string replaced with N/A)
-                //String longitude = airport.getLongitude() != null ? String.valueOf(airport.getLongitude()) : "N/A";
-                //writer.append(longitude).append("\n");
+        // Observe the LiveData for airport data
+        airportViewModel.getAllAirports().observe(this, airports -> {
+            if (airports != null && !airports.isEmpty()) {
+                Utils.appendAirportsToCsvFile(getApplication(), airports);
+                //showAirportsCsvPreview();
             }
-            writer.flush();
-            Log.d("Airport CSV", "Appended " + airports.size() + " airports to CSV.");
-        } catch (IOException e) {
-            Log.e("Airport CSV", "Error appending to CSV", e);
+        });
+
+        flightViewModel = new ViewModelProvider(this).get(FlightViewModel.class);
+        flightViewModel.getAllFlights().observe(this, flights -> {
+            if (flights != null && !flights.isEmpty()) {
+                Utils.appendFlightsToCsvFile(getApplication(), flights);
+                //showFlightsCsvPreview();
+            }
+        });
+
+        airlineViewModel = new ViewModelProvider(this).get(AirlineViewModel.class);
+        airlineViewModel.getAllAirlines().observe(this, airlines -> {
+            if (airlines != null && !airlines.isEmpty()) {
+                Utils.appendAirlinesToCsvFile(getApplication(), airlines);
+                //showAirlinesCsvPreview();
+            }
+        });
+    }
+
+    private void showAirlinesCsvPreview() {
+       File csvFile = Utils.getAirlinesCsvFile(getApplication());
+        if (!csvFile.exists()) {
+            Toast.makeText(this, "No file to preview", Toast.LENGTH_SHORT).show();
+            return;
         }
+
+        createAlertDialogFromFile(csvFile);
+    }
+
+    private void showAirportsCsvPreview() {
+        File csvFile = Utils.getAirportsCsvFile(getApplication());
+        if (!csvFile.exists()) {
+            Toast.makeText(this, "No file to preview", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        createAlertDialogFromFile(csvFile);
+    }
+
+
+    private void showFlightsCsvPreview() {
+        File csvFile = Utils.getFlightsCsvFile(getApplication());
+        if (!csvFile.exists()) {
+            Toast.makeText(this, "No file to preview", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        createAlertDialogFromFile(csvFile);
+    }
+
+    private void createAlertDialogFromFile(File csvFile){
+        try {
+            List<String> lines = Files.readAllLines(csvFile.toPath());
+            int previewCount = Math.min(10, lines.size());
+            String preview = TextUtils.join("\n", lines.subList(0, previewCount));
+
+            new AlertDialog.Builder(this)
+                    .setTitle("CSV Preview")
+                    .setMessage(preview)
+                    //.setPositiveButton("Download", (d, w) -> Utils.saveAirlinesCsvToDownloads(getApplication()))
+                    .setNegativeButton("Close", null)
+                    .show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private void showFlightNotification(String title, String message) {
+        // Check if permission is granted
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Notifications not enabled",Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // Build the notification
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "flight_alerts")
+                .setSmallIcon(R.drawable.airplane_icon)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true);
+
+        // Show the notification
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        notificationManager.notify(1, builder.build());
     }
 }

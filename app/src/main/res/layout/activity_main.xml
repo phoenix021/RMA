@@ -29,22 +29,6 @@
         android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-
-        <!-- AppBarLayout holds your toolbar -->
-        <com.google.android.material.appbar.AppBarLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <com.google.android.material.appbar.MaterialToolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                android:background="?attr/colorPrimary"
-                app:title="Flight Tracker" />
-
-        </com.google.android.material.appbar.AppBarLayout>
-
-
         <!-- Welcome -->
         <TextView
             android:id="@+id/tvWelcome"
@@ -54,27 +38,6 @@
             android:textSize="24sp"
             android:textStyle="bold"
             android:layout_marginBottom="32dp" />
-
-        <AutoCompleteTextView
-            android:id="@+id/etCountry"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Select Country"
-            android:inputType="text"
-            android:padding="12dp"
-            android:layout_marginBottom="16dp"
-            android:completionThreshold="1"/>
-
-        <!-- Origin Airport -->
-        <AutoCompleteTextView
-            android:id="@+id/airplanes"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Airplanes"
-            android:inputType="text"
-            android:padding="12dp"
-            android:layout_marginBottom="16dp"
-            android:completionThreshold="1"/>
 
         <!-- Origin Airport -->
         <AutoCompleteTextView
@@ -121,6 +84,27 @@
             android:backgroundTint="@color/purple_500"
             android:textColor="@android:color/white"
             android:padding="12dp" />
+
+        <AutoCompleteTextView
+            android:id="@+id/etCountry"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Select Country"
+            android:inputType="text"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"
+            android:completionThreshold="1"/>
+
+
+        <AutoCompleteTextView
+            android:id="@+id/airplanes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Airplanes"
+            android:inputType="text"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"
+            android:completionThreshold="1"/>
 
         <!-- RecyclerView as default content -->
         <androidx.recyclerview.widget.RecyclerView

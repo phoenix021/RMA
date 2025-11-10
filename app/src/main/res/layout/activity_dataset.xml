@@ -40,10 +40,37 @@
         app:layout_constraintTop_toBottomOf="@id/btnShareAirlines"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/btnDownloadAllCsvs"
+        app:layout_constraintBottom_toTopOf="@id/match_parent"
         android:backgroundTint="@color/purple_500"
         android:textColor="@android:color/white"
         android:padding="12dp"/>
+
+
+        <Button
+            android:id="@+id/btnDownloadAirports"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Download Airports CSV"
+            app:layout_constraintTop_toBottomOf="@id/btnDownloadAirlines"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/btnDownloadFlights"
+            android:backgroundTint="@color/purple_500"
+            android:textColor="@android:color/white"
+            android:padding="12dp"/>
+
+        <Button
+            android:id="@+id/btnDownloadFlights"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Download Flight CSV"
+            app:layout_constraintTop_toBottomOf="@id/btnDownloadAirports"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/btnDownloadAllCsvs"
+            android:backgroundTint="@color/purple_500"
+            android:textColor="@android:color/white"
+            android:padding="12dp"/>
 
 
     <Button
